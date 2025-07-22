@@ -1,0 +1,16 @@
+<!-- Navbar -->
+<nav class="flex justify-around items-center px-8 py-6">
+    <div routerLink="/" class="text-2xl font-bold text-[#4D5382] cursor-pointer">TᖇᗩᑕKᗰᗩTE</div>
+    <ul class="hidden md:flex space-x-8 text-[#4D5382] text-base font-medium">
+      <li><a routerLink="/#features" class="hover:text-[#4D5382] transition cursor-pointer">Features</a></li>
+      <li><a routerLink="/#testimonials" class="hover:text-[#4D5382] transition cursor-pointer">Testimonials</a></li>
+      <li><a routerLink="/#pricing" class="hover:text-[#4D5382] transition cursor-pointer">Pricing</a></li>
+      <li><a routerLink="/#contact" class="hover:text-[#4D5382] transition cursor-pointer">Contact</a></li>
+    </ul>
+    <div>
+      <button routerLink="/login" class="bg-[#4D5382] text-white text-sm px-7 py-3 rounded-2xl hover:bg-transparent hover:text-black transition shadow">Login</button>
+    </div>
+  </nav>
+  
+<!-- This displays routed components -->
+<router-outlet></router-outlet>

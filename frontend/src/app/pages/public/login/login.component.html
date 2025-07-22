@@ -1,0 +1,54 @@
+<div
+  class="mx-auto py-10 md:my-20 2xl:my-44 w-full px-4 sm:px-6 md:w-[80%] lg:w-[60%] xl:w-[50%] pt-28 md:pt-16"
+>
+  <div class="text-3xl md:text-[40px] font-semibold text-center md:text-left">
+    <h1>Get started with <span class="text-[#4D5382] text-3xl font-bold">TᖇᗩᑕKᗰᗩTE!</span></h1>
+  </div>
+
+  <div class="mt-4 text-center md:text-left">
+    <h1 class="font-light">
+      Login to your account || Don't have account with us?
+      <span
+        class="font-bold text-[#4D5382] cursor-pointer hover:underline"
+        routerLink="/signup"
+        >Create one</span
+      >
+    </h1>
+  </div>
+
+  <!-- ------------------------------------- LOGIN FORM ------------------------------- -->
+  <div class="mt-8 md:mt-12">
+    <form>
+      <div class="space-y-6">
+        <div class="w-full">
+          <label for="username" class="font-bold block mb-2">Username</label>
+          <input
+            type="text"
+            id="username"
+            placeholder="Enter your username or email"
+            class="border p-3 md:p-4 w-full outline-none rounded"
+            formControlName="username"
+          />
+          
+        </div>
+
+        <div class="w-full">
+          <label for="password" class="font-bold block mb-2">Password</label>
+          <div class="flex items-center w-full">
+            <input
+              type='password'
+              id="password"
+              placeholder="Enter your password"
+              class="w-full border p-3 md:p-4 outline-none rounded-l rounded-r-none"
+              formControlName="password"
+            />           
+          </div>
+        </div>
+
+        <div class="mt-8 md:mt-10 text-center md:text-left">
+            <button class="bg-[#4D5382] text-white text-sm px-7 py-3 rounded-2xl hover:bg-transparent hover:text-black transition shadow">Login</button>
+        </div>
+      </div>
+    </form>
+  </div>
+</div>
