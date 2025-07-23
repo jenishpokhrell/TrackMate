@@ -6,11 +6,7 @@ using System.Threading.Tasks;
 
 namespace backend.Model
 {
-    public enum AccountType
-    {
-        Individual,
-        Duo
-    }
+ 
     public class AccountGroup : BaseEntity
     {
         public string Name { get; set; }

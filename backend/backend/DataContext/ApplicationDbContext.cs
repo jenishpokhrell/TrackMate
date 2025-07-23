@@ -15,6 +15,7 @@ namespace backend.DataContext
 
         public DbSet<Account> Accounts { get; set; }
         public DbSet<AccountGroup> AccountGroups { get; set; }
+        public DbSet<AccountType> AccountTypes { get; set; }
         public DbSet<Budget> Budgets { get; set; }
         public DbSet<Category> Categories { get; set; }
         public DbSet<Expense> Expenses { get; set; }
@@ -27,6 +28,7 @@ namespace backend.DataContext
 
             builder.Entity<Account>().ToTable("Accounts");
             builder.Entity<AccountGroup>().ToTable("AccountGroups");
+            builder.Entity<AccountType>().ToTable("AccountTypes");
             builder.Entity<Budget>().ToTable("Budgets");
             builder.Entity<Category>().ToTable("Categories");
             builder.Entity<Expense>().ToTable("Expenses");
@@ -108,12 +110,6 @@ namespace backend.DataContext
                 .HasOne(b => b.AccountGroup)
                 .WithMany()
                 .HasForeignKey(b => b.AccountGroupId)
-                .OnDelete(DeleteBehavior.NoAction);
-
-            builder.Entity<Category>()
-                .HasOne(c => c.AccountGroup)
-                .WithMany()
-                .HasForeignKey(c => c.AccountGroupId)
                 .OnDelete(DeleteBehavior.NoAction);
 
             builder.Entity<Notification>()
