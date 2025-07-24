@@ -27,8 +27,8 @@ namespace backend.Helpers
             }
 
             // Seed Admin
-            string adminEmail = "admin123@gmail.com";
-            string adminPassword = "Admin@123";
+            string adminEmail = "admin_email_here"; // Add admin email
+            string adminPassword = "admin_password_here"; //Add admin password
 
             var adminUser = await userManager.FindByEmailAsync(adminEmail);
             if(adminUser == null)

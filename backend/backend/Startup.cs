@@ -70,11 +70,12 @@ namespace backend
                 endpoints.MapControllers();
             });
 
-            using (var scope = app.ApplicationServices.CreateScope())
+            // Uncomment this to seed data to database
+            /*using (var scope = app.ApplicationServices.CreateScope())
             {
                 var services = scope.ServiceProvider;
                 DbSeeder.SeedAsync(serviceProvider).Wait();
-            }
+            }*/
         }
     }
 }
