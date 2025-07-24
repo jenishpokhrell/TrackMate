@@ -48,7 +48,7 @@ namespace backend
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
-        public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
+        public void Configure(IApplicationBuilder app, IWebHostEnvironment env, IServiceProvider serviceProvider)
         {
             if (env.IsDevelopment())
             {
@@ -73,7 +73,7 @@ namespace backend
             using (var scope = app.ApplicationServices.CreateScope())
             {
                 var services = scope.ServiceProvider;
-                DbSeeder.SeedAsync(services).Wait();
+                DbSeeder.SeedAsync(serviceProvider).Wait();
             }
         }
     }
