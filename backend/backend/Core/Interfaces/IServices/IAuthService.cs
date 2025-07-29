@@ -3,6 +3,7 @@ using backend.Dto.Auth;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Security.Claims;
 using System.Threading.Tasks;
 
 namespace backend.Core.Interfaces.IServices
@@ -12,5 +13,6 @@ namespace backend.Core.Interfaces.IServices
         Task<GeneralServiceResponseDto> RegisterIndividualAsync(RegisterIndividualDto individualDto);
         Task<GeneralServiceResponseDto> RegisterDuoPerson1Async(RegisterDuoPerson1Dto person1Dto);
         Task<GeneralServiceResponseDto> RegisterDuoPerson2Async(RegisterDuoPerson2Dto person2Dto);
+        Task<LoginServiceResponseDto> LoginAsync(LoginDto loginDto);
     }
 }

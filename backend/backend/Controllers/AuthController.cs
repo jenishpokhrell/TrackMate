@@ -65,5 +65,25 @@ namespace backend.Controllers
             }
         }
 
+        [HttpPost]
+        [Route("login")]
+        public async Task<IActionResult> Login(LoginDto loginDto)
+        {
+            try
+            {
+                var user = await _authService.LoginAsync(loginDto);
+                if(user is null)
+                {
+                    return Unauthorized("Invalid Credentials");
+                }
+
+                return Ok(user);
+            }
+            catch (ApplicationException ex)
+            {
+                return BadRequest(ex.Message);
+            }
+        }
+
     }
 }

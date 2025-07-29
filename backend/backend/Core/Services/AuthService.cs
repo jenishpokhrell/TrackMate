@@ -3,12 +3,14 @@ using backend.Core.Dto.GeneralDto;
 using backend.Core.Interfaces.IServices;
 using backend.DataContext;
 using backend.Dto.Auth;
+using backend.Helpers;
 using backend.Model;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Security.Claims;
 using System.Threading.Tasks;
 
 namespace backend.Core.Services
@@ -19,14 +21,18 @@ namespace backend.Core.Services
         private readonly UserManager<ApplicationUser> _userManager;
         private readonly IMapper _mapper;
         private readonly ApplicationDbContext _context;
+        private readonly GenereteJWTToken _generateJWTToken;
 
-        public AuthService(RoleManager<IdentityRole> roleManager, UserManager<ApplicationUser> userManager, IMapper mapper, ApplicationDbContext context)
+        public AuthService(RoleManager<IdentityRole> roleManager, UserManager<ApplicationUser> userManager, IMapper mapper, ApplicationDbContext context, 
+            GenereteJWTToken generateJWTToken)
         {
             _roleManager = roleManager;
             _userManager = userManager;
             _mapper = mapper;
             _context = context;
+            _generateJWTToken = generateJWTToken;
         }
+
         public async Task<GeneralServiceResponseDto> RegisterIndividualAsync(RegisterIndividualDto individualDto)
         {
             var user = new ApplicationUser { UserName = individualDto.Username, Email = individualDto.Email, PhoneNumber = individualDto.PhoneNumber };
@@ -72,7 +78,6 @@ namespace backend.Core.Services
                 Success = true,
                 Message = "Individual Account Created Successfully."
             };
-
         }
 
         public async Task<GeneralServiceResponseDto> RegisterDuoPerson1Async(RegisterDuoPerson1Dto person1Dto)
@@ -100,7 +105,6 @@ namespace backend.Core.Services
                 AccountTypeId = accountType.Id,
                 AdminUserId = user.Id
             };
-
 
             var account = new Account
             {
@@ -185,8 +189,39 @@ namespace backend.Core.Services
                 Success = true,
                 Message = "Duo Account for Person 2 Created Successfully."
             };
-
         }
 
+        public async Task<LoginServiceResponseDto> LoginAsync(LoginDto loginDto)
+        {
+            var user = await _userManager.FindByEmailAsync(loginDto.Email);
+            if(user is null)
+            {
+                throw new Exception("User not found");
+            }
+
+            var isPasswordCorrect = await _userManager.CheckPasswordAsync(user, loginDto.Password);
+
+            if (!isPasswordCorrect)
+            {
+                throw new Exception("Incorrect Password");
+            }
+
+            var newToken = await _generateJWTToken.GenerateToken(user);
+            var roles = await _userManager.GetRolesAsync(user);
+            var userInfo = GenerateUserInfo(user, roles);
+
+            return new LoginServiceResponseDto
+            {
+                NewToken = newToken,
+                UserInfo = userInfo
+            };
+        }
+
+        private UserInfo GenerateUserInfo(ApplicationUser User, IList<string> Roles)
+        {
+            var userInfo = _mapper.Map<UserInfo>(User);
+            userInfo.Roles = Roles.ToList();
+            return userInfo;
+        }
     }
 }

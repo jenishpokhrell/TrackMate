@@ -41,7 +41,7 @@ namespace backend
 
             services.AddScoped<IAuthService, AuthService>();
 
-
+            services.AddScoped<GenereteJWTToken>();
             services.AddAutoMapper(typeof(Startup));
 
 
@@ -92,11 +92,39 @@ namespace backend
                 options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
             });
 
-
-            services.AddControllers();
             services.AddSwaggerGen(c =>
             {
                 c.SwaggerDoc("v1", new OpenApiInfo { Title = "backend", Version = "v1" });
+
+
+                //Allowing Swagger to authenticate users using JWT 
+                c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
+                {
+                    Name = "Authorization",
+                    In = ParameterLocation.Header,
+                    Description = "Please enter you token in following format = 'Bearer YOUR_TOKEN'",
+                    Type = SecuritySchemeType.ApiKey,
+                    BearerFormat = "JWT",
+                    Scheme = "bearer"
+                });
+
+                //Applying Security Requirement to swagger
+                c.AddSecurityRequirement(new OpenApiSecurityRequirement
+                {
+                    {
+                        new OpenApiSecurityScheme
+                        {
+                            Name = "Bearer",
+                            In = ParameterLocation.Header,
+                            Reference = new OpenApiReference
+                            {
+                                Id = "Bearer",
+                                Type = ReferenceType.SecurityScheme
+                            }
+                        },
+                        new List<string>()
+                    }
+                });
             });
 
         }
