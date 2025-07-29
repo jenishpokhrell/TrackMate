@@ -10,6 +10,8 @@ namespace backend.Model
     public class AccountGroup : BaseEntity
     {
         public string Name { get; set; }
+
+        public Guid AccountTypeId { get; set; }
         public AccountType AccountType { get; set; }
 
         public string? AdminUserId { get; set; }

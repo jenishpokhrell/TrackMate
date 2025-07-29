@@ -9,6 +9,5 @@ namespace backend.Model
     public class ApplicationUser : IdentityUser
     {
         public Account Account { get; set; }
-        public string Role { get; set; }
     }
 }
