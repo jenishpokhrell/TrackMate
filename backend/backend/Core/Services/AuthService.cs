@@ -37,12 +37,6 @@ namespace backend.Core.Services
         {
             var user = new ApplicationUser { UserName = individualDto.Username, Email = individualDto.Email, PhoneNumber = individualDto.PhoneNumber };
 
-            if(!await _roleManager.RoleExistsAsync("User"))
-            {
-                await _roleManager.CreateAsync(new IdentityRole("User"));
-            }
-
-            await _userManager.AddToRoleAsync(user, "User");
             var result = await _userManager.CreateAsync(user, individualDto.Password);
 
             if (!result.Succeeded)
@@ -54,6 +48,13 @@ namespace backend.Core.Services
                     Message = "Internal Server Error"
                 };
             }
+
+            if (!await _roleManager.RoleExistsAsync("User"))
+            {
+                await _roleManager.CreateAsync(new IdentityRole("User"));
+            }
+
+            await _userManager.AddToRoleAsync(user, "User");
 
             var accountType = await _context.AccountTypes.FirstOrDefaultAsync(a => a.Type == "Individual");
 
@@ -74,8 +75,17 @@ namespace backend.Core.Services
                 AccountGroupId = group.Id
             };
 
+            var notification = new Notification
+            {
+                UserId = user.Id,
+                Type = "Welcome, Message",
+                Message = $"Welcome, {individualDto.Username}. You have successfully created your account",
+                IsRead = false
+            };
+
             _context.AccountGroups.Add(group);
             _context.Accounts.Add(account);
+            _context.Notifications.Add(notification);
             await _context.SaveChangesAsync();
 
             return new GeneralServiceResponseDto
@@ -90,12 +100,7 @@ namespace backend.Core.Services
         {
             var user = new ApplicationUser { UserName = person1Dto.Username, Email = person1Dto.Email, PhoneNumber = person1Dto.PhoneNumber };
 
-            if (!await _roleManager.RoleExistsAsync("User"))
-            {
-                await _roleManager.CreateAsync(new IdentityRole("User"));
-            }
-
-            await _userManager.AddToRoleAsync(user, "User");
+            
             var result = await _userManager.CreateAsync(user, person1Dto.Password);
 
             if (!result.Succeeded)
@@ -108,6 +113,14 @@ namespace backend.Core.Services
                     Message = "Internal Server Error"
                 };
             }
+
+            if (!await _roleManager.RoleExistsAsync("User"))
+            {
+                await _roleManager.CreateAsync(new IdentityRole("User"));
+            }
+
+            await _userManager.AddToRoleAsync(user, "User");
+            await _userManager.AddToRoleAsync(user, "GroupAdmin");
 
             var accountType = await _context.AccountTypes.FirstOrDefaultAsync(a => a.Type == "Duo");
 
@@ -128,8 +141,17 @@ namespace backend.Core.Services
                 AccountGroupId = group.Id
             };
 
+            var notification = new Notification
+            {
+                UserId = user.Id,
+                Type = "Welcome, Message",
+                Message = $"Welcome, {person1Dto.Username}. You have successfully created your account",
+                IsRead = false
+            };
+
             _context.AccountGroups.Add(group);
             _context.Accounts.Add(account);
+            _context.Notifications.Add(notification);
             await _context.SaveChangesAsync();
 
             return new GeneralServiceResponseDto
@@ -170,12 +192,6 @@ namespace backend.Core.Services
 
             var user = new ApplicationUser { UserName = person2Dto.Username, Email = person2Dto.Email, PhoneNumber = person2Dto.PhoneNumber };
 
-            if (!await _roleManager.RoleExistsAsync("User"))
-            {
-                await _roleManager.CreateAsync(new IdentityRole("User"));
-            }
-
-            await _userManager.AddToRoleAsync(user, "User");
             var result = await _userManager.CreateAsync(user, person2Dto.Password);
             if (!result.Succeeded)
             {
@@ -188,6 +204,13 @@ namespace backend.Core.Services
                 };
             }
 
+            if (!await _roleManager.RoleExistsAsync("User"))
+            {
+                await _roleManager.CreateAsync(new IdentityRole("User"));
+            }
+
+            await _userManager.AddToRoleAsync(user, "User");
+
             var account = new Account
             {
                 Name = person2Dto.Name,
@@ -198,7 +221,16 @@ namespace backend.Core.Services
                 AccountGroupId = group.Id
             };
 
+            var notification = new Notification
+            {
+                UserId = user.Id,
+                Type = "Welcome, Message",
+                Message = $"Welcome, {person2Dto.Username}. You have successfully created your account",
+                IsRead = false
+            };
+
             _context.Accounts.Add(account);
+            _context.Notifications.Add(notification);
             await _context.SaveChangesAsync();
 
             return new GeneralServiceResponseDto

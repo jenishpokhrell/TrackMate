@@ -19,7 +19,7 @@ namespace backend.Helpers
 
 
             // Seed Roles
-            string[] roles = { "Admin", "User" };
+            string[] roles = { "Admin", "GroupAdmin", "User" };
             foreach(var role in roles)
             {
                 if (!await roleManager.RoleExistsAsync(role))
@@ -31,7 +31,7 @@ namespace backend.Helpers
             string adminPassword = "admin_password_here"; //Add admin password
 
             var adminUser = await userManager.FindByEmailAsync(adminEmail);
-            if(adminUser == null)
+            if (adminUser == null)
             {
                 var newAdmin = new ApplicationUser
                 {
