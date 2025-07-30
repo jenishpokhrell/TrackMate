@@ -14,6 +14,6 @@ namespace backend.Dto.Auth
         public string Contact { get; set; }
         public string Gender { get; set; }
         public string GroupName { get; set; }
-        public List<string> Roles { get; set; }
+        public string Roles { get; set; }
     }
 }

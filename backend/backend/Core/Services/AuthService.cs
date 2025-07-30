@@ -37,6 +37,12 @@ namespace backend.Core.Services
         {
             var user = new ApplicationUser { UserName = individualDto.Username, Email = individualDto.Email, PhoneNumber = individualDto.PhoneNumber };
 
+            if(!await _roleManager.RoleExistsAsync("User"))
+            {
+                await _roleManager.CreateAsync(new IdentityRole("User"));
+            }
+
+            await _userManager.AddToRoleAsync(user, "User");
             var result = await _userManager.CreateAsync(user, individualDto.Password);
 
             if (!result.Succeeded)
@@ -84,6 +90,12 @@ namespace backend.Core.Services
         {
             var user = new ApplicationUser { UserName = person1Dto.Username, Email = person1Dto.Email, PhoneNumber = person1Dto.PhoneNumber };
 
+            if (!await _roleManager.RoleExistsAsync("User"))
+            {
+                await _roleManager.CreateAsync(new IdentityRole("User"));
+            }
+
+            await _userManager.AddToRoleAsync(user, "User");
             var result = await _userManager.CreateAsync(user, person1Dto.Password);
 
             if (!result.Succeeded)
@@ -157,8 +169,14 @@ namespace backend.Core.Services
             }
 
             var user = new ApplicationUser { UserName = person2Dto.Username, Email = person2Dto.Email, PhoneNumber = person2Dto.PhoneNumber };
-            var result = await _userManager.CreateAsync(user, person2Dto.Password);
 
+            if (!await _roleManager.RoleExistsAsync("User"))
+            {
+                await _roleManager.CreateAsync(new IdentityRole("User"));
+            }
+
+            await _userManager.AddToRoleAsync(user, "User");
+            var result = await _userManager.CreateAsync(user, person2Dto.Password);
             if (!result.Succeeded)
             {
                 var errors = string.Join("; ", result.Errors.Select(e => e.Description));
@@ -199,6 +217,16 @@ namespace backend.Core.Services
                 throw new Exception("User not found");
             }
 
+            var userId = await _userManager.FindByIdAsync(user.Id);
+
+            var account = await _context.Accounts.Include(a => a.AccountGroup)
+                .FirstOrDefaultAsync(a => a.UserId == user.Id);
+
+            if (account is null)
+            {
+                throw new Exception("Data not found");
+            }
+
             var isPasswordCorrect = await _userManager.CheckPasswordAsync(user, loginDto.Password);
 
             if (!isPasswordCorrect)
@@ -208,7 +236,7 @@ namespace backend.Core.Services
 
             var newToken = await _generateJWTToken.GenerateToken(user);
             var roles = await _userManager.GetRolesAsync(user);
-            var userInfo = GenerateUserInfo(user, roles);
+            var userInfo = GenerateUserInfo(user, roles, account);
 
             return new LoginServiceResponseDto
             {
@@ -217,11 +245,19 @@ namespace backend.Core.Services
             };
         }
 
-        private UserInfo GenerateUserInfo(ApplicationUser User, IList<string> Roles)
+        private UserInfo GenerateUserInfo(ApplicationUser User, IList<string> roles, Account account)
         {
-            var userInfo = _mapper.Map<UserInfo>(User);
-            userInfo.Roles = Roles.ToList();
-            return userInfo;
+            return new UserInfo
+            {
+                Email = User.Email,
+                Username = User.UserName,
+                Contact = User.PhoneNumber,
+                Name = account.Name,
+                Address = account.Address,
+                Gender = account.Gender.ToString(),
+                GroupName = account.AccountGroup?.Name,
+                Roles = string.Join(", ", roles)
+            };
         }
     }
 }

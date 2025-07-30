@@ -12,7 +12,7 @@ namespace backend.Helpers
     {
         public Mapper()
         {
-            CreateMap<ApplicationUser, UserInfo>().ReverseMap();
+            CreateMap<ApplicationUser,  UserInfo>().ReverseMap();
             CreateMap<Account, UserInfo>().ReverseMap();
         }
     }
