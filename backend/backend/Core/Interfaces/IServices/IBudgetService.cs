@@ -1,11 +1,15 @@
-﻿using System;
+﻿using backend.Core.Dto.GeneralDto;
+using backend.Dto.Budget;
+using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Security.Claims;
 using System.Threading.Tasks;
 
 namespace backend.Core.Interfaces.IServices
 {
     public interface IBudgetService
     {
+        Task<GeneralServiceResponseDto> AddBudgetAsync(ClaimsPrincipal User, AddBudgetDto budgetDto);
     }
 }

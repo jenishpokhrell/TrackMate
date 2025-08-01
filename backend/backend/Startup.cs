@@ -40,8 +40,10 @@ namespace backend
             services.AddDbContext<ApplicationDbContext>(options => options.UseSqlServer(Configuration.GetConnectionString("DefaultConnection")));
 
             services.AddScoped<IAuthService, AuthService>();
+            services.AddScoped<IBudgetService, BudgetService>();
 
             services.AddScoped<GenereteJWTToken>();
+            services.AddSingleton<DapperContext>();
             services.AddAutoMapper(typeof(Startup));
 
 
