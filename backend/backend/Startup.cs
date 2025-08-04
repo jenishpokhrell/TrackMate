@@ -1,4 +1,6 @@
+using backend.Core.Interfaces.IRepositories;
 using backend.Core.Interfaces.IServices;
+using backend.Core.Repositories;
 using backend.Core.Services;
 using backend.DataContext;
 using backend.Helpers;
@@ -41,6 +43,7 @@ namespace backend
 
             services.AddScoped<IAuthService, AuthService>();
             services.AddScoped<IBudgetService, BudgetService>();
+            services.AddScoped<IBudgetRepository, BudgetRepository>();
 
             services.AddScoped<GenereteJWTToken>();
             services.AddSingleton<DapperContext>();
@@ -145,6 +148,7 @@ namespace backend
 
             app.UseRouting();
 
+            app.UseAuthentication();
             app.UseAuthorization();
 
             app.UseEndpoints(endpoints =>

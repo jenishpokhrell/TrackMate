@@ -37,5 +37,55 @@ namespace backend.Controllers
             }
         }
 
+        [HttpGet]
+        [Route("get-my-budget")]
+        [Authorize]
+        public async Task<IActionResult> GetMyBudget()
+        {
+            try
+            {   
+                var result = await _budgetService.GetMyBudgetAsync(User);
+                return Ok(result);
+            }
+            catch(ApplicationException ex)
+            {
+                return BadRequest(ex.Message);
+            }
+        }
+
+        [HttpPut]
+        [Route("update-budget/{id}")]
+        [Authorize]
+        public async Task<IActionResult> UpdateBudget(UpdateBudgetDto updateBudgetDto, Guid id)
+        {
+            try
+            {
+                var result = await _budgetService.UpdateBudgetAsync(User, updateBudgetDto, id);
+                return StatusCode(result.StatusCode, result.Message);
+            }
+            catch (ApplicationException ex)
+            {
+                return BadRequest(ex.Message);
+            }
+        }
+
+
+        [HttpDelete]
+        [Route("delete-budget/{id}")]
+        [Authorize]
+        public async Task<IActionResult> Delete(Guid id)
+        {
+            try
+            {
+                var result = await _budgetService.DeleteBudgetAsync(User, id);
+                return StatusCode(result.StatusCode, result.Message);
+            }
+            catch (ApplicationException ex)
+            {
+                return BadRequest(ex.Message);
+            }
+        }
+
+
     }
 }

@@ -1,5 +1,6 @@
 ﻿using AutoMapper;
 using backend.Dto.Auth;
+using backend.Dto.Budget;
 using backend.Model;
 using System;
 using System.Collections.Generic;
@@ -14,6 +15,7 @@ namespace backend.Helpers
         {
             CreateMap<ApplicationUser,  UserInfo>().ReverseMap();
             CreateMap<Account, UserInfo>().ReverseMap();
+            CreateMap<Budget, GetBudgetDto>().ReverseMap();
         }
     }
 }

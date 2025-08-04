@@ -1,5 +1,6 @@
 ﻿using backend.Core.Dto.GeneralDto;
 using backend.Dto.Budget;
+using backend.Model;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -10,6 +11,10 @@ namespace backend.Core.Interfaces.IRepositories
 {
     public interface IBudgetRepository
     {
-        Task<GeneralServiceResponseDto> AddBudget(ClaimsPrincipal User, AddBudgetDto addBudgetDto);
+        Task<Budget> GetBudgetById(Guid id);
+
+        Task UpdateBudget(ClaimsPrincipal User, UpdateBudgetDto updateBudgetDto, Guid id);
+
+        Task DeleteBudget(Guid id);
     }
 }
