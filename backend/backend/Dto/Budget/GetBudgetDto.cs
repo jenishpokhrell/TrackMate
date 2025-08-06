@@ -7,7 +7,7 @@ namespace backend.Dto.Budget
 {
     public class GetBudgetDto
     {
-        public string Id { get; set; }
+        public Guid Id { get; set; }
         public decimal Amount { get; set; }
         public bool IsExceeded { get; set; }
     }

@@ -45,6 +45,9 @@ namespace backend
             services.AddScoped<IBudgetService, BudgetService>();
             services.AddScoped<IBudgetRepository, BudgetRepository>();
 
+            services.AddScoped<IExpenseRepository, ExpenseRepository>();
+            services.AddScoped<IExpenseService, ExpenseService>();
+
             services.AddScoped<GenereteJWTToken>();
             services.AddSingleton<DapperContext>();
             services.AddAutoMapper(typeof(Startup));

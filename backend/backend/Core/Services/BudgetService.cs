@@ -18,13 +18,15 @@ namespace backend.Core.Services
     {
         private readonly ApplicationDbContext _context;
         private IBudgetRepository _budgetRepository;
+        private IExpenseRepository _expenseRepository;
         private readonly IMapper _mapper;
 
-        public BudgetService(ApplicationDbContext context, IMapper mapper, IBudgetRepository budgetRepository)
+        public BudgetService(ApplicationDbContext context, IMapper mapper, IBudgetRepository budgetRepository, IExpenseRepository expenseRepository)
         {
             _context = context;
             _mapper = mapper;
             _budgetRepository = budgetRepository;
+            _expenseRepository = expenseRepository;
         }
 
         public async Task<GeneralServiceResponseDto> AddBudgetAsync(ClaimsPrincipal User, AddBudgetDto budgetDto)
@@ -75,6 +77,21 @@ namespace backend.Core.Services
             }
 
             return _mapper.Map<GetBudgetDto>(budget);
+        }
+
+        public async Task<GetBudgetDto> GetMyRemainingBudgetAsync(ClaimsPrincipal User)
+        {
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+
+            var accountGroupId = await _context.Accounts.Where(a => a.UserId == userId).Select(a => a.AccountGroupId).FirstOrDefaultAsync();
+
+            var totalExpense = await _expenseRepository.GetTotalExpense(accountGroupId);
+
+            var budget = await _context.Budgets.FirstOrDefaultAsync(b => b.AccountGroupId == accountGroupId);
+
+            var remainingBudget = budget.Amount - totalExpense;
+
+            return new GetBudgetDto { Id = budget.Id, Amount = remainingBudget, IsExceeded = remainingBudget == 0 ? true : false };
         }
 
         public async Task<GeneralServiceResponseDto> UpdateBudgetAsync(ClaimsPrincipal User, UpdateBudgetDto updateBudgetDto, Guid id)

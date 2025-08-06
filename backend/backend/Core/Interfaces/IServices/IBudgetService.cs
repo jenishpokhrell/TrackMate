@@ -14,6 +14,8 @@ namespace backend.Core.Interfaces.IServices
 
         Task<GetBudgetDto> GetMyBudgetAsync(ClaimsPrincipal User);
 
+        Task<GetBudgetDto> GetMyRemainingBudgetAsync(ClaimsPrincipal User);
+
         Task<GeneralServiceResponseDto> UpdateBudgetAsync(ClaimsPrincipal User, UpdateBudgetDto updateBudgetDto, Guid id);
 
         Task<GeneralServiceResponseDto> DeleteBudgetAsync(ClaimsPrincipal User, Guid id);

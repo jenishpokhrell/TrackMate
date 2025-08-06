@@ -53,6 +53,22 @@ namespace backend.Controllers
             }
         }
 
+        [HttpGet]
+        [Route("get-my-remaining-budget")]
+        [Authorize]
+        public async Task<IActionResult> GetMyRemainingBudget()
+        {
+            try
+            {
+                var result = await _budgetService.GetMyRemainingBudgetAsync(User);
+                return Ok(result);
+            }
+            catch (ApplicationException ex)
+            {
+                return BadRequest(ex.Message);
+            }
+        }
+
         [HttpPut]
         [Route("update-budget/{id}")]
         [Authorize]
@@ -85,7 +101,5 @@ namespace backend.Controllers
                 return BadRequest(ex.Message);
             }
         }
-
-
     }
 }
