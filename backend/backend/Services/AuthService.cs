@@ -1,40 +1,69 @@
 ﻿using AutoMapper;
+using backend.Core.Constants;
 using backend.Core.Dto.GeneralDto;
 using backend.Core.Interfaces.IServices;
+using backend.Core.Services.Shared;
 using backend.DataContext;
 using backend.Dto.Auth;
 using backend.Helpers;
 using backend.Model;
+using backend.Services.Interfaces;
+using backend.Services.Shared.Interfaces;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Security.Claims;
 using System.Threading.Tasks;
 
-namespace backend.Core.Services
+namespace backend
 {
     public class AuthService : IAuthService
     {
         private readonly RoleManager<IdentityRole> _roleManager;
         private readonly UserManager<ApplicationUser> _userManager;
         private readonly IMapper _mapper;
+        private readonly ILogger<AuthService> _logger;
+        private readonly IRoleManagementService _roleManagementService;
         private readonly ApplicationDbContext _context;
         private readonly GenereteJWTToken _generateJWTToken;
+        private readonly INotificationService _notificationService;
 
-        public AuthService(RoleManager<IdentityRole> roleManager, UserManager<ApplicationUser> userManager, IMapper mapper, ApplicationDbContext context, 
-            GenereteJWTToken generateJWTToken)
+        public AuthService(RoleManager<IdentityRole> roleManager, UserManager<ApplicationUser> userManager, IMapper mapper, ILogger<AuthService> logger,
+           IRoleManagementService roleManagementService, ApplicationDbContext context, INotificationService notificationService GenereteJWTToken generateJWTToken)
         {
-            _roleManager = roleManager;
-            _userManager = userManager;
-            _mapper = mapper;
-            _context = context;
-            _generateJWTToken = generateJWTToken;
+            _roleManager = roleManager ?? throw new ArgumentNullException(nameof(roleManager));
+            _userManager = userManager ?? throw new ArgumentNullException(nameof(userManager));
+            _mapper = mapper ?? throw new ArgumentNullException(nameof(mapper));
+            _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+            _roleManagementService = roleManagementService ?? throw new ArgumentNullException(nameof(roleManagementService));
+            _context = context ?? throw new ArgumentNullException(nameof(context));
+            _notificationService = notificationService ?? throw new ArgumentNullException(nameof(notificationService));
+            _generateJWTToken = generateJWTToken ?? throw new ArgumentNullException(nameof(generateJWTToken));
         }
 
         public async Task<GeneralServiceResponseDto> RegisterIndividualAsync(RegisterIndividualDto individualDto)
         {
+            if(individualDto == null)
+            {
+                _logger.LogWarning("Registration attempt with null data.");
+                return ErrorResponse.CreateErrorResponse(400, "Invalid registration data provided");
+            }
+
+            try
+            {
+                _logger.LogInformation("Starting user registration for username: {Username}", individualDto.Username);
+
+                using var transaction = await _context.Database.BeginTransactionAsync();
+                {
+
+                }
+            }catch
+            {
+
+            }
             var user = new ApplicationUser { UserName = individualDto.Username, Email = individualDto.Email, PhoneNumber = individualDto.PhoneNumber };
 
             var result = await _userManager.CreateAsync(user, individualDto.Password);
@@ -75,17 +104,10 @@ namespace backend.Core.Services
                 AccountGroupId = group.Id
             };
 
-            var notification = new Notification
-            {
-                UserId = user.Id,
-                Type = "Welcome, Message",
-                Message = $"Welcome, {individualDto.Username}. You have successfully created your account",
-                IsRead = false
-            };
 
             _context.AccountGroups.Add(group);
             _context.Accounts.Add(account);
-            _context.Notifications.Add(notification);
+            await _notificationService.AddWelcomeNotificationAsync();
             await _context.SaveChangesAsync();
 
             return new GeneralServiceResponseDto
@@ -99,7 +121,6 @@ namespace backend.Core.Services
         public async Task<GeneralServiceResponseDto> RegisterDuoPerson1Async(RegisterDuoPerson1Dto person1Dto)
         {
             var user = new ApplicationUser { UserName = person1Dto.Username, Email = person1Dto.Email, PhoneNumber = person1Dto.PhoneNumber };
-
             
             var result = await _userManager.CreateAsync(user, person1Dto.Password);
 
@@ -166,7 +187,6 @@ namespace backend.Core.Services
         {
             var group = await _context.AccountGroups.Include(g => g.Accounts).Include(g => g.AccountType)
                 .FirstOrDefaultAsync(g => g.Name == person2Dto.GroupName && g.AccountType.Type == "Duo");
-
 
             if(group is null)
             {
@@ -256,7 +276,7 @@ namespace backend.Core.Services
 
             if (account is null)
             {
-                throw new Exception("Data not found");
+                throw new Exception("Account not found");
             }
 
             var isPasswordCorrect = await _userManager.CheckPasswordAsync(user, loginDto.Password);

@@ -5,6 +5,7 @@ using backend.Core.Interfaces.IServices;
 using backend.DataContext;
 using backend.Dto.Budget;
 using backend.Model;
+using backend.Services.Interfaces;
 using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
@@ -19,19 +20,24 @@ namespace backend.Core.Services
         private readonly ApplicationDbContext _context;
         private IBudgetRepository _budgetRepository;
         private IExpenseRepository _expenseRepository;
+        private readonly IUserContextService _userContext;
+        private readonly INotificationService _notificationService;
         private readonly IMapper _mapper;
 
-        public BudgetService(ApplicationDbContext context, IMapper mapper, IBudgetRepository budgetRepository, IExpenseRepository expenseRepository)
+        public BudgetService(ApplicationDbContext context, IMapper mapper, IBudgetRepository budgetRepository, IExpenseRepository expenseRepository,
+            IUserContextService userContext, INotificationService notificationService)
         {
             _context = context;
             _mapper = mapper;
             _budgetRepository = budgetRepository;
             _expenseRepository = expenseRepository;
+            _notificationService = notificationService;
+            _userContext = userContext;
         }
 
         public async Task<GeneralServiceResponseDto> AddBudgetAsync(ClaimsPrincipal User, AddBudgetDto budgetDto)
         {
-            var currentLoggedInUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            var currentLoggedInUserId = _userContext.GetCurrentLoggedInUserID();
 
             var accountGroupId = await _context.Accounts.Where(a => a.UserId == currentLoggedInUserId).Select(a => a.AccountGroupId).FirstOrDefaultAsync();
 
@@ -67,7 +73,7 @@ namespace backend.Core.Services
 
         public async Task<GetBudgetDto> GetMyBudgetAsync(ClaimsPrincipal User)
         {
-            var currentLoggedInUser = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            var currentLoggedInUser = _userContext.GetCurrentLoggedInUserID();
 
             var budget = await _context.Budgets.FirstOrDefaultAsync(b => b.UserId == currentLoggedInUser);
 
@@ -81,7 +87,7 @@ namespace backend.Core.Services
 
         public async Task<GetBudgetDto> GetMyRemainingBudgetAsync(ClaimsPrincipal User)
         {
-            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            var userId = _userContext.GetCurrentLoggedInUserID();
 
             var accountGroupId = await _context.Accounts.Where(a => a.UserId == userId).Select(a => a.AccountGroupId).FirstOrDefaultAsync();
 
@@ -96,7 +102,7 @@ namespace backend.Core.Services
 
         public async Task<GeneralServiceResponseDto> UpdateBudgetAsync(ClaimsPrincipal User, UpdateBudgetDto updateBudgetDto, Guid id)
         {
-            var currentloggedInUser = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            var currentloggedInUser = _userContext.GetCurrentLoggedInUserID();
 
             var budget = await _budgetRepository.GetBudgetById(id);
 
@@ -132,7 +138,7 @@ namespace backend.Core.Services
 
         public async Task<GeneralServiceResponseDto> DeleteBudgetAsync(ClaimsPrincipal User, Guid id)
         {
-            var currentLoggedInUser = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            var currentLoggedInUser = _userContext.GetCurrentLoggedInUserID();
 
             var budget = await _budgetRepository.GetBudgetById(id);
 

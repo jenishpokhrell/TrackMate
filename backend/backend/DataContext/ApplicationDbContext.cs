@@ -109,7 +109,7 @@ namespace backend.DataContext
             builder.Entity<Budget>()
                 .HasOne(b => b.AccountGroup)
                 .WithMany()
-                .HasForeignKey(b => b.AccountGroupId)
+                .HasForeignKey(b => b.AccountGroupId)   
                 .OnDelete(DeleteBehavior.NoAction);
 
             builder.Entity<Notification>()
