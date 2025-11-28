@@ -1,5 +1,6 @@
 ﻿using backend.Core.Interfaces.IServices;
 using backend.Dto.Auth;
+using backend.Model.Dto.Auth;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using System;
@@ -22,11 +23,11 @@ namespace backend.Controllers
 
         [HttpPost]
         [Route("register/individual")]
-        public async Task<IActionResult> RegisterIndividual(RegisterIndividualDto individualDto)
+        public async Task<IActionResult> RegisterIndividual([FromBody] RegisterUser userDto)
         {
             try
             {
-                var individual = await _authService.RegisterIndividualAsync(individualDto);
+                var individual = await _authService.RegisterIndividualAsync(userDto);
                 return StatusCode(individual.StatusCode, individual.Message);
             }
             catch(ApplicationException ex)
@@ -37,11 +38,11 @@ namespace backend.Controllers
 
         [HttpPost]
         [Route("register/duo/person1")]
-        public async Task<IActionResult> RegisterDuoPerson1(RegisterDuoPerson1Dto duoPerson1Dto)
+        public async Task<IActionResult> RegisterDuoPerson1([FromBody] RegisterUser userDto)
         {
             try
             {
-                var person1 = await _authService.RegisterDuoPerson1Async(duoPerson1Dto);
+                var person1 = await _authService.RegisterDuoPerson1Async(userDto);
                 return StatusCode(person1.StatusCode, person1.Message);
             }
             catch(ApplicationException ex)
@@ -52,11 +53,11 @@ namespace backend.Controllers
 
         [HttpPost]
         [Route("register/duo/person2")]
-        public async Task<IActionResult> RegisterDuoPerson2(RegisterDuoPerson2Dto duoPerson2Dto)
+        public async Task<IActionResult> RegisterDuoPerson2([FromBody] RegisterUser userDto)
         {
             try
             {
-                var person2 = await _authService.RegisterDuoPerson2Async(duoPerson2Dto);
+                var person2 = await _authService.RegisterDuoPerson2Async(userDto);
                 return StatusCode(person2.StatusCode, person2.Message);
             }
             catch (ApplicationException ex)

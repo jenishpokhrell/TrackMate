@@ -13,7 +13,7 @@ namespace backend.Core.Interfaces.IRepositories
     {
         Task<Budget> GetBudgetById(Guid id);
 
-        Task UpdateBudget(ClaimsPrincipal User, UpdateBudgetDto updateBudgetDto, Guid id);
+        Task UpdateBudget(UpdateBudgetDto updateBudgetDto, Guid id);
 
         Task DeleteBudget(Guid id);
     }

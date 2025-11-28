@@ -1,6 +1,7 @@
 ﻿using backend.Core.Dto.GeneralDto;
 using backend.Dto.Expense;
 using backend.Model;
+using backend.Model.Dto.Expense;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -14,5 +15,13 @@ namespace backend.Core.Interfaces.IRepositories
         Task AddExpenses(Expense expense);
 
         Task<decimal> GetTotalExpense(Guid accountGroupId);
+
+        Task<IEnumerable<Expense>> GetMyExpenses();
+
+        Task<Expense> GetExpenseById(Guid Id);
+
+        Task UpdateExpense(UpdateExpenseDto updateExpenseDto, Guid Id);
+
+        Task DeleteExpense(Guid Id);
     }
 }

@@ -10,6 +10,6 @@ namespace backend.Core.Interfaces.IServices
 {
     public interface IIncomeService
     {
-        Task<GeneralServiceResponseDto> AddIncomeAsync(ClaimsPrincipal User, AddIncomeDto addIncomeDto);
+        Task<GeneralServiceResponseDto> AddIncomeAsync(AddIncomeDto addIncomeDto);
     }
 }

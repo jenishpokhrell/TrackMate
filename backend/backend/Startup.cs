@@ -5,6 +5,16 @@ using backend.Core.Services;
 using backend.DataContext;
 using backend.Helpers;
 using backend.Model;
+using backend.Services.Helpers;
+using backend.Services.Interfaces;
+using backend.Services.Shared;
+using backend.Services.Shared.Interfaces;
+using backend.Services.Shared.Interfaces.IBudget;
+using backend.Services.Shared.Interfaces.IExpense;
+using backend.Services.Shared.Interfaces.IIncome;
+using backend.Services.Shared.SharedBudget;
+using backend.Services.Shared.SharedExpense;
+using backend.Services.Shared.SharedIncome;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
@@ -42,11 +52,33 @@ namespace backend
             services.AddDbContext<ApplicationDbContext>(options => options.UseSqlServer(Configuration.GetConnectionString("DefaultConnection")));
 
             services.AddScoped<IAuthService, AuthService>();
+
             services.AddScoped<IBudgetService, BudgetService>();
+            services.AddScoped<IBudgetCreationService, BudgetCreationService>();
             services.AddScoped<IBudgetRepository, BudgetRepository>();
 
             services.AddScoped<IExpenseRepository, ExpenseRepository>();
+            services.AddScoped<IExpenseCreationService, ExpenseCreationService>();
             services.AddScoped<IExpenseService, ExpenseService>();
+
+            services.AddScoped<IIncomeRepository, IncomeRepository>();
+            services.AddScoped<IIncomeCreationService, IncomeCreationService>();
+            services.AddScoped<IIncomeService, IncomeService>();
+
+            services.AddScoped<INotificationRepository, NotificationRepository>();
+            services.AddScoped<INotificationService, NotificationService>();
+
+            services.AddScoped<IUserContextService, UserContextService>();
+
+            services.AddScoped<IAccountCreationService, AccountCreationService>();
+
+            services.AddScoped<IGroupCreationService, GroupCreationService>();
+
+            services.AddScoped<IRoleManagementService, RoleManagementService>();
+
+            services.AddScoped<IFindAccountGroupId, FindAccountGroupId>();
+
+            services.AddScoped<IUserCreationService, UserCreationService>();
 
             services.AddScoped<GenereteJWTToken>();
             services.AddSingleton<DapperContext>();

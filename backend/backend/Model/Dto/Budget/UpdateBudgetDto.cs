@@ -5,8 +5,7 @@ using System.Threading.Tasks;
 
 namespace backend.Dto.Budget
 {
-    public class UpdateBudgetDto
-    {
-        public decimal Amount { get; set; }
-    }
+    public sealed record UpdateBudgetDto(
+            decimal Amount 
+        );
 }

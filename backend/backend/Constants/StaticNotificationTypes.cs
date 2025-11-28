@@ -7,12 +7,18 @@ namespace backend.Core.Constants
 {
     public static class StaticNotificationTypes
     {
-        public const string welcome = "Welcome, User";
+        public const string welcome = "Welcome, New User";
 
-        public const string expenses = "Expenses Added";
+        public const string expensesAdd = "Expenses Added";
 
-        public const string budget = "Budget Added";
+        public const string expensesUpdate = "Expenses Updated";
 
-        public const string income = "Income Added";
+        public const string budgetAdd = "Budget Added";
+
+        public const string budgetUpdate = "Budget Updated";
+
+        public const string incomeAdd = "Income Added";
+
+        public const string incomeUpdate = "Income Updated";
     }
 }

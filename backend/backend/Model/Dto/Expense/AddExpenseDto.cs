@@ -5,11 +5,11 @@ using System.Threading.Tasks;
 
 namespace backend.Dto.Expense
 {
-    public class AddExpenseDto
+    public sealed record AddExpenseDto
     {
-        public string Title { get; set; }
-        public decimal Amount { get; set; }
-        public string Description { get; set; }
-        public Guid CategoryId { get; set; }
-    }
+        public string Title { get; init; }
+        public decimal Amount { get; init; }
+        public string Description { get; init; }
+        public Guid CategoryId { get; init; }
+    };
 }

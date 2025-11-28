@@ -1,4 +1,5 @@
 ﻿using backend.Model;
+using backend.Model.Dto.Income;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -8,6 +9,8 @@ namespace backend.Core.Interfaces.IRepositories
 {
     public interface IIncomeRepository
     {
-        public Task AddIncome(Income income);
+        Task AddIncome(Income income);
+
+        Task<Income> GetIncomeById(Guid Id);
     }
 }

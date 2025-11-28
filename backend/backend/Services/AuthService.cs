@@ -7,10 +7,13 @@ using backend.DataContext;
 using backend.Dto.Auth;
 using backend.Helpers;
 using backend.Model;
+using backend.Model.Dto.Auth;
+using backend.Model.Dto.Shared;
 using backend.Services.Interfaces;
 using backend.Services.Shared.Interfaces;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Storage;
 using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
@@ -30,9 +33,13 @@ namespace backend
         private readonly ApplicationDbContext _context;
         private readonly GenereteJWTToken _generateJWTToken;
         private readonly INotificationService _notificationService;
+        private readonly IUserCreationService _userCreationService;
+        private readonly IGroupCreationService _groupCreationService;
+        private readonly IAccountCreationService _accountCreationService;
 
         public AuthService(RoleManager<IdentityRole> roleManager, UserManager<ApplicationUser> userManager, IMapper mapper, ILogger<AuthService> logger,
-           IRoleManagementService roleManagementService, ApplicationDbContext context, INotificationService notificationService GenereteJWTToken generateJWTToken)
+           IRoleManagementService roleManagementService, ApplicationDbContext context, INotificationService notificationService, GenereteJWTToken generateJWTToken,
+           IUserCreationService userCreationService, IGroupCreationService groupCreationService, IAccountCreationService accountCreationService)
         {
             _roleManager = roleManager ?? throw new ArgumentNullException(nameof(roleManager));
             _userManager = userManager ?? throw new ArgumentNullException(nameof(userManager));
@@ -42,138 +49,156 @@ namespace backend
             _context = context ?? throw new ArgumentNullException(nameof(context));
             _notificationService = notificationService ?? throw new ArgumentNullException(nameof(notificationService));
             _generateJWTToken = generateJWTToken ?? throw new ArgumentNullException(nameof(generateJWTToken));
+            _userCreationService = userCreationService ?? throw new ArgumentNullException(nameof(userCreationService));
+            _groupCreationService = groupCreationService ?? throw new ArgumentNullException(nameof(groupCreationService));
+            _accountCreationService = accountCreationService ?? throw new ArgumentNullException(nameof(accountCreationService));
         }
 
-        public async Task<GeneralServiceResponseDto> RegisterIndividualAsync(RegisterIndividualDto individualDto)
+        public async Task<GeneralServiceResponseDto> RegisterIndividualAsync(RegisterUser userDto)
         {
-            if(individualDto == null)
+            if(userDto == null)
             {
                 _logger.LogWarning("Registration attempt with null data.");
                 return ErrorResponse.CreateErrorResponse(400, "Invalid registration data provided");
             }
 
+            using var transaction = await _context.Database.BeginTransactionAsync();
             try
             {
-                _logger.LogInformation("Starting user registration for username: {Username}", individualDto.Username);
+                _logger.LogInformation("Starting user registration for username: {Username}", userDto.Username);
 
-                using var transaction = await _context.Database.BeginTransactionAsync();
                 {
+                    var createUser = await _userCreationService.CreateUserAsync(userDto);
 
+                    await _roleManagementService.EnsureRoleExistsAsync(createUser, StaticUserRoles.USER);
+
+                    var group = new AccountGroupDto
+                    {
+                        Name = userDto.GroupName,
+                        AdminUserId = createUser.Id
+                    };
+
+                    var createdGroup = await _groupCreationService.CreateIndividualGroupAsync(group);
+
+                    var account = new AccountDto
+                    {
+                        Name = userDto.Name,
+                        Gender = userDto.Gender,
+                        Address = userDto.Address,
+                        UserId = createUser.Id,
+                        AccountGroupId = createdGroup.Id
+                    };
+
+                    await _accountCreationService.IndividualAccountCreationAsync(account);
+
+                    var notification = new AddNotificationDto
+                    {
+                        UserId = createUser.Id,
+                        Type = StaticNotificationTypes.welcome,
+                        Message = $"Welcome {account.Name}, you have successfully created your account.",
+                        IsRead = false
+                    };
+
+                    var dbTransaction = transaction.GetDbTransaction();
+                    await _notificationService.WelcomeNotificationAsync(notification, dbTransaction);
+
+                    await _context.SaveChangesAsync();
+                    _logger.LogInformation("Registration for {Name} done successfully.", userDto.Username);
+
+                    await transaction.CommitAsync();
                 }
-            }catch
-            {
-
             }
-            var user = new ApplicationUser { UserName = individualDto.Username, Email = individualDto.Email, PhoneNumber = individualDto.PhoneNumber };
-
-            var result = await _userManager.CreateAsync(user, individualDto.Password);
-
-            if (!result.Succeeded)
+            catch(Exception ex)
             {
-                return new GeneralServiceResponseDto
+                try
                 {
-                    StatusCode = 500,
-                    Success = false,
-                    Message = "Internal Server Error"
-                };
+                    await transaction.RollbackAsync(); 
+                }
+                catch (InvalidOperationException)
+                {
+                    _logger.LogWarning("Transaction already completed, skipping rollback.");
+                }
+                _logger.LogError("Registration failed for {Name} done successfully.", userDto.Username);
+                throw new UserRegistrationException("An error occured while registering user", ex);
             }
-
-            if (!await _roleManager.RoleExistsAsync("User"))
-            {
-                await _roleManager.CreateAsync(new IdentityRole("User"));
-            }
-
-            await _userManager.AddToRoleAsync(user, "User");
-
-            var accountType = await _context.AccountTypes.FirstOrDefaultAsync(a => a.Type == "Individual");
-
-            var group = new AccountGroup
-            {
-                Name = $"{individualDto.Username}'s Group",
-                AccountTypeId = accountType.Id,
-                AdminUserId = user.Id
-            };
-
-            var account = new Account
-            {
-                Name = individualDto.Name,
-                Gender = individualDto.Gender,
-                Address = individualDto.Address,
-                AccountRole = null,
-                ApplicationUser = user,
-                AccountGroupId = group.Id
-            };
-
-
-            _context.AccountGroups.Add(group);
-            _context.Accounts.Add(account);
-            await _notificationService.AddWelcomeNotificationAsync();
-            await _context.SaveChangesAsync();
-
+            
             return new GeneralServiceResponseDto
             {
                 StatusCode = 201,
                 Success = true,
                 Message = "Individual Account Created Successfully."
             };
+
         }
 
-        public async Task<GeneralServiceResponseDto> RegisterDuoPerson1Async(RegisterDuoPerson1Dto person1Dto)
+        public async Task<GeneralServiceResponseDto> RegisterDuoPerson1Async(RegisterUser userDto)
         {
-            var user = new ApplicationUser { UserName = person1Dto.Username, Email = person1Dto.Email, PhoneNumber = person1Dto.PhoneNumber };
-            
-            var result = await _userManager.CreateAsync(user, person1Dto.Password);
-
-            if (!result.Succeeded)
+            if(userDto is null)
             {
-                var errors = string.Join("; ", result.Errors.Select(e => e.Description));
-                return new GeneralServiceResponseDto
+                _logger.LogWarning("Registration attempt with null data.");
+                return ErrorResponse.CreateErrorResponse(400, "Invalid registration data provided");
+            }
+
+            using var transaction = await _context.Database.BeginTransactionAsync();
+            try
+            {
+                _logger.LogInformation("Starting user registration for username: {Username}", userDto.Username);
+
+                var createUser = await _userCreationService.CreateUserAsync(userDto);
+
+                await _roleManagementService.EnsureRoleExistsAsync(createUser, StaticUserRoles.USER);
+
+                await _userManager.AddToRoleAsync(createUser, StaticUserRoles.GROUPADMIN);
+
+                var accountGroup = new AccountGroupDto
                 {
-                    StatusCode = 500,
-                    Success = false,
-                    Message = "Internal Server Error"
+                    Name = userDto.GroupName,
+                    AdminUserId = createUser.Id,
                 };
+
+                var createdDuoGroup = await _groupCreationService.CreateDuoGroupAsync(accountGroup);
+
+                var duoAccount1 = new AccountDto
+                {
+                    Name = userDto.Name,
+                    Gender = userDto.Gender,
+                    Address = userDto.Address,
+                    AccountRole = AccountRole.Person1,
+                    UserId = createUser.Id,
+                    AccountGroupId = createdDuoGroup.Id
+                };
+
+                await _accountCreationService.DuoPersonAccountCreationAsync(duoAccount1);
+
+                var notification = new AddNotificationDto
+                {
+                    UserId = createUser.Id,
+                    Type = StaticNotificationTypes.welcome,
+                    Message = $"Welcome {userDto.Name}, you have successfully created your account.",
+                    IsRead = false
+                };
+
+                var dbTransaction = transaction.GetDbTransaction();
+                await _notificationService.WelcomeNotificationAsync(notification, dbTransaction);
+
+                await _context.SaveChangesAsync();
+                _logger.LogInformation("Registration for {Name} done successfully.", userDto.Name);
+
+                await transaction.CommitAsync();
             }
-
-            if (!await _roleManager.RoleExistsAsync("User"))
+            catch (Exception ex)
             {
-                await _roleManager.CreateAsync(new IdentityRole("User"));
+                try
+                {
+                    await transaction.RollbackAsync();  // Only if not yet completed
+                }
+                catch (InvalidOperationException)
+                {
+                    _logger.LogWarning("Transaction already completed, skipping rollback.");
+                }
+                _logger.LogError("Registration failed for {Name} done successfully.", userDto.Username);
+                throw new UserRegistrationException("An error occured while registering user", ex);
             }
-
-            await _userManager.AddToRoleAsync(user, "User");
-            await _userManager.AddToRoleAsync(user, "GroupAdmin");
-
-            var accountType = await _context.AccountTypes.FirstOrDefaultAsync(a => a.Type == "Duo");
-
-            var group = new AccountGroup
-            {
-                Name = person1Dto.GroupName,
-                AccountTypeId = accountType.Id,
-                AdminUserId = user.Id
-            };
-
-            var account = new Account
-            {
-                Name = person1Dto.Name,
-                Gender = person1Dto.Gender,
-                Address = person1Dto.Address,
-                AccountRole = AccountRole.Person1,
-                ApplicationUser = user,
-                AccountGroupId = group.Id
-            };
-
-            var notification = new Notification
-            {
-                UserId = user.Id,
-                Type = "Welcome, Message",
-                Message = $"Welcome, {person1Dto.Username}. You have successfully created your account",
-                IsRead = false
-            };
-
-            _context.AccountGroups.Add(group);
-            _context.Accounts.Add(account);
-            _context.Notifications.Add(notification);
-            await _context.SaveChangesAsync();
 
             return new GeneralServiceResponseDto
             {
@@ -183,75 +208,82 @@ namespace backend
             };
         }
 
-        public async Task<GeneralServiceResponseDto> RegisterDuoPerson2Async(RegisterDuoPerson2Dto person2Dto)
+        public async Task<GeneralServiceResponseDto> RegisterDuoPerson2Async(RegisterUser userDto)
         {
-            var group = await _context.AccountGroups.Include(g => g.Accounts).Include(g => g.AccountType)
-                .FirstOrDefaultAsync(g => g.Name == person2Dto.GroupName && g.AccountType.Type == "Duo");
-
-            if(group is null)
+            if(userDto is null)
             {
-                return new GeneralServiceResponseDto
+                _logger.LogWarning("Registration attemting with null data.");
+                return ErrorResponse.CreateErrorResponse(404, "Invalid registration data provided");
+            }
+
+            using var transaction = await _context.Database.BeginTransactionAsync();
+            try
+            {
+                _logger.LogInformation("Starting user registration for username: {Username}", userDto.Username);
+
+                var group = await _context.AccountGroups.Include(g => g.Accounts).Include(g => g.AccountType)
+                .FirstOrDefaultAsync(g => g.Name == userDto.GroupName && g.AccountType.Type == "Duo");
+
+                if (group is null)
                 {
-                    Success = false,
-                    StatusCode = 404,
-                    Message = "Group not found"
-                };
-            }
+                    return ErrorResponse.CreateErrorResponse(404, "Group Not Found");
+                }
 
-            var accountCount = await _context.Accounts.CountAsync(a => a.AccountGroupId == group.Id);
+                var accountCount = await _context.Accounts.CountAsync(a => a.AccountGroupId == group.Id);
 
-            if(accountCount >= group.AccountType.MaxAccounts)
-            {
-                return new GeneralServiceResponseDto
+                if (accountCount >= group.AccountType.MaxAccounts)
                 {
-                    Success = false,
-                    StatusCode = 400,
-                    Message = "Duo type exceeded number of users."
-                };
-            }
+                    return ErrorResponse.CreateErrorResponse(400, "Duo type exceeded number of users. If you want to join us you can create " +
+                        "your new account, Individual or Duo, whatever suits you.");
+                }
 
-            var user = new ApplicationUser { UserName = person2Dto.Username, Email = person2Dto.Email, PhoneNumber = person2Dto.PhoneNumber };
+                var createUser = await _userCreationService.CreateUserAsync(userDto);
 
-            var result = await _userManager.CreateAsync(user, person2Dto.Password);
-            if (!result.Succeeded)
-            {
-                var errors = string.Join("; ", result.Errors.Select(e => e.Description));
-                return new GeneralServiceResponseDto
+                await _roleManagementService.EnsureRoleExistsAsync(createUser, StaticUserRoles.USER);
+
+                var duoAccount2 = new AccountDto
                 {
-                    Success = false,
-                    StatusCode = 400,
-                    Message = $"Error Creating Person 2: {errors}"
+                    Name = userDto.Name,
+                    Gender = userDto.Gender,
+                    Address = userDto.Address,
+                    AccountRole = AccountRole.Person2,
+                    UserId = createUser.Id,
+                    AccountGroupId = group.Id
                 };
+
+                await _accountCreationService.DuoPersonAccountCreationAsync(duoAccount2);
+
+                var notification = new AddNotificationDto
+                {
+                    UserId = createUser.Id,
+                    Type = StaticNotificationTypes.welcome,
+                    Message = $"Welcome {userDto.Name}, you have successfully created your account.",
+                    IsRead = false
+                };
+
+                var dbTransaction = transaction.GetDbTransaction();
+                await _notificationService.WelcomeNotificationAsync(notification, dbTransaction);
+
+                await _context.SaveChangesAsync();
+                _logger.LogInformation("Registration for {Name} done successfully.", userDto.Name);
+
+                await transaction.CommitAsync();
+
             }
-
-            if (!await _roleManager.RoleExistsAsync("User"))
+            catch(Exception ex)
             {
-                await _roleManager.CreateAsync(new IdentityRole("User"));
+                try
+                {
+                    await transaction.RollbackAsync();
+                }
+                catch(InvalidOperationException)
+                {
+                    _logger.LogWarning("Transaction completed. Skipping transaction rollback.");
+                }
+
+                _logger.LogError("Registration failed for {Name} done successfully.", userDto.Username);
+                throw new UserRegistrationException("An error occured while registering user", ex);
             }
-
-            await _userManager.AddToRoleAsync(user, "User");
-
-            var account = new Account
-            {
-                Name = person2Dto.Name,
-                Gender = person2Dto.Gender,
-                Address = person2Dto.Address,
-                AccountRole = AccountRole.Person2,
-                ApplicationUser = user,
-                AccountGroupId = group.Id
-            };
-
-            var notification = new Notification
-            {
-                UserId = user.Id,
-                Type = "Welcome, Message",
-                Message = $"Welcome, {person2Dto.Username}. You have successfully created your account",
-                IsRead = false
-            };
-
-            _context.Accounts.Add(account);
-            _context.Notifications.Add(notification);
-            await _context.SaveChangesAsync();
 
             return new GeneralServiceResponseDto
             {

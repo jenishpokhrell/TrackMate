@@ -5,15 +5,15 @@ using System.Threading.Tasks;
 
 namespace backend.Dto.Auth
 {
-    public class UserInfo
+    public sealed record UserInfo
     {
-        public string Email { get; set; }
-        public string Name { get; set; }
-        public string Username { get; set; }
-        public string Address { get; set; }
-        public string Contact { get; set; }
-        public string Gender { get; set; }
-        public string GroupName { get; set; }
-        public string Roles { get; set; }
-    }
+        public string Email { get; init; }
+        public string Name { get; init; }
+        public string Username { get; init; }
+        public string Address { get; init; }
+        public string Contact { get; init; }
+        public string Gender { get; init; }
+        public string GroupName { get; init; }
+        public string Roles { get; init; }
+    };
 }

@@ -5,9 +5,9 @@ using System.Threading.Tasks;
 
 namespace backend.Dto.Auth
 {
-    public class LoginServiceResponseDto
+    public sealed record LoginServiceResponseDto
     {
-        public string NewToken { get; set; }
-        public UserInfo UserInfo { get; set; }
-    }
+        public string NewToken { get; init; }
+        public UserInfo UserInfo { get; init; }
+    };
 }

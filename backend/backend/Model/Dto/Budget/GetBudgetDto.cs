@@ -5,10 +5,10 @@ using System.Threading.Tasks;
 
 namespace backend.Dto.Budget
 {
-    public class GetBudgetDto
+    public sealed record GetBudgetDto
     {
-        public Guid Id { get; set; }
-        public decimal Amount { get; set; }
-        public bool IsExceeded { get; set; }
-    }
+        public Guid Id { get; init; }
+        public decimal Amount { get; init; }
+        public bool IsExceeded { get; init; }
+    };
 }

@@ -1,5 +1,6 @@
 ﻿using backend.Core.Dto.GeneralDto;
 using backend.Core.Interfaces.IRepositories;
+using backend.Core.Interfaces.IServices;
 using backend.DataContext;
 using backend.Dto.Budget;
 using backend.Model;
@@ -16,9 +17,11 @@ namespace backend.Core.Repositories
     public class BudgetRepository : IBudgetRepository
     {
         private readonly DapperContext _dbo;
-        public BudgetRepository(DapperContext dbo)
+        private readonly IUserContextService _userContext;
+        public BudgetRepository(DapperContext dbo, IUserContextService userContext)
         {
-            _dbo = dbo;
+            _dbo = dbo ?? throw new ArgumentNullException(nameof(dbo));
+            _userContext = userContext ?? throw new ArgumentNullException(nameof(userContext));
         }
 
         public async Task<Budget> GetBudgetById(Guid id)
@@ -31,10 +34,10 @@ namespace backend.Core.Repositories
             }
         }
 
-        public async Task UpdateBudget(ClaimsPrincipal User, UpdateBudgetDto updateBudgetDto, Guid id)
+        public async Task UpdateBudget(UpdateBudgetDto updateBudgetDto, Guid id)
         {
             var updatedAt = DateTime.Now;
-            var currentLoggedInUser = User.FindFirstValue(ClaimTypes.Name);
+            var updatedBy = _userContext.GetCurrentLoggedInUserUsername();
 
             var query = "UPDATE Budgets SET Amount = @Amount, UpdatedAt = @UpdatedAt, UpdatedBy = @UpdatedBy WHERE Id = @Id";
 
@@ -42,7 +45,7 @@ namespace backend.Core.Repositories
             parameters.Add("Id", id, DbType.Guid);
             parameters.Add("Amount", updateBudgetDto.Amount, DbType.Decimal);
             parameters.Add("UpdatedAt", updatedAt, DbType.DateTime);
-            parameters.Add("UpdatedBy", currentLoggedInUser, DbType.String);
+            parameters.Add("UpdatedBy", updatedBy, DbType.String);
 
             using(var connection = _dbo.CreateConnection())
             {

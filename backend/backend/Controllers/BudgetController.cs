@@ -28,7 +28,7 @@ namespace backend.Controllers
         {
             try
             {
-                var result = await _budgetService.AddBudgetAsync(User, budgetDto);
+                var result = await _budgetService.AddBudgetAsync(budgetDto);
                 return StatusCode(result.StatusCode, result.Message);
             }
             catch(ApplicationException ex)
@@ -44,7 +44,7 @@ namespace backend.Controllers
         {
             try
             {   
-                var result = await _budgetService.GetMyBudgetAsync(User);
+                var result = await _budgetService.GetMyBudgetAsync();
                 return Ok(result);
             }
             catch(ApplicationException ex)
@@ -60,7 +60,7 @@ namespace backend.Controllers
         {
             try
             {
-                var result = await _budgetService.GetMyRemainingBudgetAsync(User);
+                var result = await _budgetService.GetMyRemainingBudgetAsync();
                 return Ok(result);
             }
             catch (ApplicationException ex)
@@ -76,7 +76,7 @@ namespace backend.Controllers
         {
             try
             {
-                var result = await _budgetService.UpdateBudgetAsync(User, updateBudgetDto, id);
+                var result = await _budgetService.UpdateBudgetAsync(updateBudgetDto, id);
                 return StatusCode(result.StatusCode, result.Message);
             }
             catch (ApplicationException ex)

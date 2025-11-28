@@ -5,8 +5,8 @@ using System.Threading.Tasks;
 
 namespace backend.Dto.Expense
 {
-    public class GetTotalExpensesDto
+    public sealed record GetTotalExpensesDto
     {
-        public decimal TotalExpenses { get; set; }
-    }
+        public decimal TotalExpenses { get; init; }
+    };
 }

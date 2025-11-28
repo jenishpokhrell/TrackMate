@@ -33,7 +33,7 @@ namespace backend.Services.Shared
 
                     var roleResult = await _roleManager.CreateAsync(new IdentityRole(role));
                     if (!roleResult.Succeeded)
-                           {
+                    {
                         var error = string.Join(", ", roleResult.Errors.Select(e => e.Description));
                         _logger.LogError("Failed to create role {role}: {errors}", role, error);
                         throw new UserRegistrationException($"Failed creating role: {error}");
@@ -48,7 +48,7 @@ namespace backend.Services.Shared
                 }
 
                 //Assigning role to user
-                _logger.LogInformation("Assiging {role} role tp {UserId}", role, User.Id);
+                _logger.LogInformation("Assiging {role} role to {UserId}", role, User.Id);
                 var addRoleResult = await _userManager.AddToRoleAsync(User, role);
                 if (!addRoleResult.Succeeded)
                 {

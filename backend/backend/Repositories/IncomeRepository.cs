@@ -27,5 +27,15 @@ namespace backend.Core.Repositories
                 await connection.ExecuteAsync(query, income);
             }
         }
+
+        public async Task<Income> GetIncomeById(Guid Id)
+        {
+            var query = "SELECT * FROM Income WHERE Id = @Id";
+
+            using(var connection = _dbo.CreateConnection())
+            {
+                return await connection.QueryFirstOrDefaultAsync<Income>(query, new { Id });
+            }
+        }
     }
 }

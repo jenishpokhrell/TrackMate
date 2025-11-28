@@ -10,13 +10,13 @@ namespace backend.Core.Interfaces.IServices
 {
     public interface IBudgetService
     {
-        Task<GeneralServiceResponseDto> AddBudgetAsync(ClaimsPrincipal User, AddBudgetDto budgetDto);
+        Task<GeneralServiceResponseDto> AddBudgetAsync(AddBudgetDto budgetDto);
 
-        Task<GetBudgetDto> GetMyBudgetAsync(ClaimsPrincipal User);
+        Task<GetBudgetDto> GetMyBudgetAsync();
 
-        Task<GetBudgetDto> GetMyRemainingBudgetAsync(ClaimsPrincipal User);
+        Task<GetBudgetDto> GetMyRemainingBudgetAsync();
 
-        Task<GeneralServiceResponseDto> UpdateBudgetAsync(ClaimsPrincipal User, UpdateBudgetDto updateBudgetDto, Guid id);
+        Task<GeneralServiceResponseDto> UpdateBudgetAsync(UpdateBudgetDto updateBudgetDto, Guid id);
 
         Task<GeneralServiceResponseDto> DeleteBudgetAsync(ClaimsPrincipal User, Guid id);
     }

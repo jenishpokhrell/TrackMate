@@ -1,5 +1,6 @@
 ﻿using backend.Core.Interfaces.IServices;
 using backend.Dto.Expense;
+using backend.Model.Dto.Expense;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -28,7 +29,7 @@ namespace backend.Controllers
         {
             try
             {
-                var result = await _expenseService.AddExpensesAsync(User, addExpenseDto);
+                var result = await _expenseService.AddExpensesAsync(addExpenseDto);
                 return StatusCode(result.StatusCode, result.Message);
             }
             catch(ApplicationException ex)
@@ -46,6 +47,38 @@ namespace backend.Controllers
             {
                 var result = await _expenseService.GetMyTotalExpensesAsync(User);
                 return Ok(result);
+            }
+            catch (ApplicationException ex)
+            {
+                return BadRequest(ex.Message);
+            }
+        }
+
+        [HttpPut]
+        [Route("update-expense/{id}")]
+        [Authorize]
+        public async Task<IActionResult> UpdateExpense(UpdateExpenseDto updateExpenseDto, Guid id)
+        {
+            try
+            {
+                var result = await _expenseService.UpdateExpenseAsync(updateExpenseDto, id);
+                return StatusCode(result.StatusCode, result.Message);
+            }
+            catch (ApplicationException ex)
+            {
+                return BadRequest(ex.Message);
+            }
+        }
+
+        [HttpDelete]
+        [Route("delete-expense/{id}")]
+        [Authorize]
+        public async Task<IActionResult> Delete(Guid id)
+        {
+            try
+            {
+                var result = await _expenseService.DeleteExpenseAsync(id);
+                return StatusCode(result.StatusCode, result.Message);
             }
             catch (ApplicationException ex)
             {

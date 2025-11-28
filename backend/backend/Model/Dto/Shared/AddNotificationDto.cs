@@ -5,11 +5,11 @@ using System.Threading.Tasks;
 
 namespace backend.Model.Dto.Shared
 {
-    public class AddNotificationDto
+    public sealed record AddNotificationDto
     {
-        public string UserId { get; set; }
-        public string Type { get; set; }
-        public string Message { get; set; }
-        public bool IsRead { get; set; }
+        public string UserId { get; init; }
+        public string Type { get; init; }
+        public string Message { get; init; }
+        public bool IsRead { get; init; }
     }
 }
