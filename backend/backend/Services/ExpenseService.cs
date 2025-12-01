@@ -104,7 +104,7 @@ namespace backend.Core.Services
         }
 
 
-        public async Task<GetTotalExpensesDto> GetMyTotalExpensesAsync(ClaimsPrincipal User)
+        public async Task<GetTotalExpensesDto> GetTotalExpensesAsync()
         {
             var userId = _userContext.GetCurrentLoggedInUserID();
 

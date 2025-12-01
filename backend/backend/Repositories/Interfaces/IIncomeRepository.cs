@@ -12,5 +12,9 @@ namespace backend.Core.Interfaces.IRepositories
         Task AddIncome(Income income);
 
         Task<Income> GetIncomeById(Guid Id);
+
+        Task<decimal> GetTotalIncome(Guid accountGroupId);
+
+        Task UpdateIncome(UpdateIncomeDto updateIncomeDto, Guid Id);
     }
 }

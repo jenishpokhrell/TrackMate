@@ -1,4 +1,5 @@
-﻿using backend.Core.Constants;
+﻿using AutoMapper;
+using backend.Core.Constants;
 using backend.Core.Dto.GeneralDto;
 using backend.Core.Interfaces.IRepositories;
 using backend.Core.Interfaces.IServices;
@@ -6,7 +7,9 @@ using backend.Core.Services.Shared;
 using backend.DataContext;
 using backend.Dto.Income;
 using backend.Model;
+using backend.Model.Dto.Income;
 using backend.Model.Dto.Shared;
+using backend.Services.Helpers;
 using backend.Services.Interfaces;
 using backend.Services.Shared.Interfaces.IIncome;
 using Microsoft.EntityFrameworkCore;
@@ -28,9 +31,11 @@ namespace backend.Core.Services
         private readonly IUserContextService _userContext;
         private readonly ILogger<IncomeService> _logger;
         private readonly IIncomeCreationService _incomeCreationService;
+        private readonly IFindAccountGroupId _findAccountGroupId;
+        private readonly IMapper _mapper;
 
         public IncomeService(ApplicationDbContext context, IIncomeRepository incomeRepository, INotificationService notificationService, IUserContextService userContext,
-            ILogger<IncomeService> logger, IIncomeCreationService incomeCreationService)
+            ILogger<IncomeService> logger, IIncomeCreationService incomeCreationService, IFindAccountGroupId findAccountGroupId, IMapper mapper)
         {
             _context = context ?? throw new ArgumentNullException(nameof(context));
             _incomeRepository = incomeRepository ?? throw new ArgumentNullException(nameof(incomeRepository));
@@ -38,6 +43,8 @@ namespace backend.Core.Services
             _userContext = userContext ?? throw new ArgumentNullException(nameof(userContext));
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
             _incomeCreationService = incomeCreationService ?? throw new ArgumentNullException(nameof(incomeCreationService));
+            _findAccountGroupId = findAccountGroupId ?? throw new ArgumentNullException(nameof(findAccountGroupId));
+            _mapper = mapper ?? throw new ArgumentNullException(nameof(mapper));
         }
         public async Task<GeneralServiceResponseDto> AddIncomeAsync(AddIncomeDto addIncomeDto)
         {
@@ -95,6 +102,24 @@ namespace backend.Core.Services
                 return ErrorResponse.CreateErrorResponse(500, $"An error occured while adding expenses: {ex.Message}");
             }
 
+        }
+
+        public async Task<GetTotalIncomeDto> GetTotalIncomeAsync()
+        {
+            _logger.LogInformation("Getting total income data...");
+
+            var currentUserId = _userContext.GetCurrentLoggedInUserID();
+
+            var accountGroupId = await _findAccountGroupId.FindAccountGroupIdAsync(currentUserId);
+
+            if(accountGroupId == Guid.Empty)
+            {
+                throw new Exception("Cannot find account group");
+            }
+
+            var totalIncome = await _incomeRepository.GetTotalIncome(accountGroupId);
+
+            return _mapper.Map<GetTotalIncomeDto>(totalIncome);
         }
     }
 }

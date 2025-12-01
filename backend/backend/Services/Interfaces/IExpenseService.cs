@@ -14,7 +14,7 @@ namespace backend.Core.Interfaces.IServices
     {
         Task<GeneralServiceResponseDto> AddExpensesAsync(AddExpenseDto addExpenseDto);
 
-        Task<GetTotalExpensesDto> GetMyTotalExpensesAsync(ClaimsPrincipal User);
+        Task<GetTotalExpensesDto> GetTotalExpensesAsync();
 
         Task<GeneralServiceResponseDto> UpdateExpenseAsync(UpdateExpenseDto updateExpenseDto, Guid Id);
 

@@ -35,8 +35,6 @@ namespace backend.Services.Shared.SharedBudget
         {
             try
             {
-                //_logger.LogInformation("Initialization of adding budget.");
-
                 var currentLoggedInUserId = _userContext.GetCurrentLoggedInUserID();
 
                 var accountGroupId = await _findAccountGroupId.FindAccountGroupIdAsync(currentLoggedInUserId);
