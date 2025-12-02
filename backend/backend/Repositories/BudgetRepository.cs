@@ -24,17 +24,27 @@ namespace backend.Core.Repositories
             _userContext = userContext ?? throw new ArgumentNullException(nameof(userContext));
         }
 
-        public async Task<Budget> GetBudgetById(Guid id)
+        public async Task<Budget> GetBudgetById(Guid Id)
         {
             var query = "SELECT * FROM Budgets WHERE Id = @Id";
 
             using(var connection = _dbo.CreateConnection())
             {
-                return await connection.QueryFirstOrDefaultAsync<Budget>(query, new { id });
+                return await connection.QueryFirstOrDefaultAsync<Budget>(query, new { Id });
             }
         }
 
-        public async Task UpdateBudget(UpdateBudgetDto updateBudgetDto, Guid id)
+        public async Task<IEnumerable<Budget>> GetBudgets(Guid Id)
+        {
+            var query = "SELECT * FROM Budgets WHERE AccountGroupId = @Id";
+
+            using(var connection = _dbo.CreateConnection())
+            {
+                return await connection.QueryAsync<Budget>(query);
+            }
+        }
+
+        public async Task UpdateBudget(UpdateBudgetDto updateBudgetDto, Guid Id)
         {
             var updatedAt = DateTime.Now;
             var updatedBy = _userContext.GetCurrentLoggedInUserUsername();
@@ -42,7 +52,7 @@ namespace backend.Core.Repositories
             var query = "UPDATE Budgets SET Amount = @Amount, UpdatedAt = @UpdatedAt, UpdatedBy = @UpdatedBy WHERE Id = @Id";
 
             var parameters = new DynamicParameters();
-            parameters.Add("Id", id, DbType.Guid);
+            parameters.Add("Id", Id, DbType.Guid);
             parameters.Add("Amount", updateBudgetDto.Amount, DbType.Decimal);
             parameters.Add("UpdatedAt", updatedAt, DbType.DateTime);
             parameters.Add("UpdatedBy", updatedBy, DbType.String);
@@ -53,13 +63,13 @@ namespace backend.Core.Repositories
             }
         }
 
-        public async Task DeleteBudget(Guid id)
+        public async Task DeleteBudget(Guid Id)
         {
             var query = "DELETE FROM Budgets WHERE Id = @Id";
 
             using(var connection = _dbo.CreateConnection())
             {
-                await connection.ExecuteAsync(query, new { id });
+                await connection.ExecuteAsync(query, new { Id });
             }
         }
     }

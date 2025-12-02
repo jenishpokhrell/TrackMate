@@ -15,6 +15,10 @@ namespace backend.Core.Interfaces.IServices
 
         Task<GetTotalIncomeDto> GetTotalIncomeAsync();
 
-        Task<GeneralServiceResponseDto> UpdateIncomeAsync(UpdateIncomeDto updateIncomeDto);
+        Task<IEnumerable<GetIncomeDto>> GetIncomesAsync();
+
+        Task<GeneralServiceResponseDto> UpdateIncomeAsync(UpdateIncomeDto updateIncomeDto, Guid Id);
+
+        Task<GeneralServiceResponseDto> DeleteIncomesAsync(Guid Id);
     }
 }

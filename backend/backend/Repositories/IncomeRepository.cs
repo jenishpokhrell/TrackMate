@@ -41,7 +41,16 @@ namespace backend.Core.Repositories
             using(var connection = _dbo.CreateConnection())
             {
                 return await connection.QueryFirstOrDefaultAsync<Income>(query, new { Id });
+            }
+        }
 
+        public async Task<IEnumerable<GetIncomeDto>> GetIncomes(Guid Id)
+        {
+            var query = "SELECT * FROM Incomes WHERE AccountGroupId = @Id";
+
+            using(var connection = _dbo.CreateConnection())
+            {
+                return await connection.QueryAsync<GetIncomeDto>(query, new { Id });
             }
         }
 
@@ -77,5 +86,17 @@ namespace backend.Core.Repositories
                 await connection.ExecuteAsync(query, parameters);
             }
         }
+
+
+        public async Task DeleteIncome(Guid Id)
+        {
+            var query = "DELETE FROM Incomes WHERE Id = @Id";
+
+            using(var connection = _dbo.CreateConnection())
+            {
+                await connection.ExecuteAsync(query, new { Id });
+            }
+        }
+
     }
 }

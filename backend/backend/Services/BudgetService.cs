@@ -126,6 +126,33 @@ namespace backend.Core.Services
             }
         }
 
+
+        public async Task<IEnumerable<GetBudgetDto>> GetAllBudgetsAsync()
+        {
+            _logger.LogInformation("Fetching all budgets for a user...");
+            try
+            {
+                var userId = _userContext.GetCurrentLoggedInUserID();
+
+                var accountGroupId = await _findAccountGroupId.FindAccountGroupIdAsync(userId);
+
+                var budgets = await _budgetRepository.GetBudgets(accountGroupId);
+
+                if(budgets is null)
+                {
+                    throw new Exception("You have't added your budget");
+                }
+
+                _logger.LogInformation("Successfully fetched budget data.");
+                return _mapper.Map<IEnumerable<GetBudgetDto>>(budgets);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError("Budget fetch failed", ex);
+                throw new Exception("Couldn't fetch list of budgets for user.");
+            }
+        }
+
         public async Task<GetBudgetDto> GetMyRemainingBudgetAsync()
         {
             _logger.LogInformation("Fetching remaining budget for the user.");
@@ -250,5 +277,6 @@ namespace backend.Core.Services
             }
             
         }
+
     }
 }

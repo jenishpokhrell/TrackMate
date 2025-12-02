@@ -20,6 +20,7 @@ namespace backend.Helpers
             CreateMap<Budget, GetBudgetDto>().ReverseMap();
             CreateMap<decimal, GetTotalExpensesDto>().ForMember(dest => dest.TotalExpenses, opt => opt.MapFrom(src => src));
             CreateMap<decimal, GetTotalIncomeDto>().ForMember(dest => dest.TotalIncome, opt => opt.MapFrom(src => src));
+            CreateMap<Income, GetIncomeDto>().ReverseMap();
         }
     }
 }

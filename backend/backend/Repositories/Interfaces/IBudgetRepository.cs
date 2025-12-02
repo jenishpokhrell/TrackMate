@@ -11,10 +11,12 @@ namespace backend.Core.Interfaces.IRepositories
 {
     public interface IBudgetRepository
     {
-        Task<Budget> GetBudgetById(Guid id);
+        Task<Budget> GetBudgetById(Guid Id);
 
-        Task UpdateBudget(UpdateBudgetDto updateBudgetDto, Guid id);
+        Task<IEnumerable<Budget>> GetBudgets(Guid Id);
 
-        Task DeleteBudget(Guid id);
+        Task UpdateBudget(UpdateBudgetDto updateBudgetDto, Guid Id);
+
+        Task DeleteBudget(Guid Id);
     }
 }

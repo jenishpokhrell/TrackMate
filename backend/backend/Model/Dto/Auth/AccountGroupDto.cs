@@ -12,6 +12,6 @@ namespace backend.Model.Dto.Auth
 
         public Guid AccountTypeId { get; init; }
 
-        public string? AdminUserId { get; init; }
+        public string AdminUserId { get; init; }
     };
 }

@@ -45,7 +45,6 @@ namespace backend.Services.Shared
                 };
 
                 _context.AccountGroups.Add(group);
-                //await _context.SaveChangesAsync();
                 _logger.LogInformation("Account Group for {GroupName} created successfully.", accountGroupDto.Name);
 
                 return group;
@@ -67,7 +66,7 @@ namespace backend.Services.Shared
 
                 if(accountType is null)
                 {
-                    throw new GroupNotFormedException("Duo account type not found");    
+                    throw new GroupNotFormedException("Duo account type not found");   
                 }
 
                 var group = new AccountGroup
@@ -78,7 +77,6 @@ namespace backend.Services.Shared
                 };
 
                 _context.AccountGroups.Add(group);
-                //await _context.SaveChangesAsync();
                 _logger.LogInformation("Account Group for {GroupName} created successfully.", accountGroupDto.Name);
 
                 return group;
@@ -88,7 +86,6 @@ namespace backend.Services.Shared
                 _logger.LogError(ex, "Account Group creation for {GroupName} failed.", accountGroupDto.Name);
                 throw new GroupNotFormedException($"Failed to create account group for '{accountGroupDto.Name}'.", ex);
             }
-
         }
     }
 }

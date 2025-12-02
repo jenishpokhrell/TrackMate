@@ -54,6 +54,22 @@ namespace backend.Controllers
         }
 
         [HttpGet]
+        [Route("get-all-budgets")]
+        [Authorize]
+        public async Task<IActionResult> GetAllBudgets()
+        {
+            try
+            {
+                var result = await _budgetService.GetAllBudgetsAsync();
+                return Ok(result);
+            }
+            catch (ApplicationException ex)
+            {
+                return BadRequest(ex.Message);
+            }
+        }
+
+        [HttpGet]
         [Route("get-my-remaining-budget")]
         [Authorize]
         public async Task<IActionResult> GetMyRemainingBudget()

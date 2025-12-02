@@ -21,6 +21,17 @@ namespace backend.Core.Services
         {
             return _httpContextAccessor.HttpContext.User.FindFirstValue(ClaimTypes.NameIdentifier)
                 ?? throw new UnauthorizedAccessException("User not authenticated.");
+            /*var userIdString = _httpContextAccessor.HttpContext.User.FindFirstValue(ClaimTypes.NameIdentifier);
+
+            if (string.IsNullOrEmpty(userIdString))
+            {
+                throw new UnauthorizedAccessException("User not authenticated.");
+            }
+
+            if (!Guid.TryParse(userIdString, out Guid userId))
+                throw new UnauthorizedAccessException("Invalid User Id");
+
+            return userId;*/
         }
 
         public string GetCurrentLoggedInUserUsername()

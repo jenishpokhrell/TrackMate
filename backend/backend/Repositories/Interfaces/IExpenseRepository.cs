@@ -16,7 +16,7 @@ namespace backend.Core.Interfaces.IRepositories
 
         Task<decimal> GetTotalExpense(Guid accountGroupId);
 
-        Task<IEnumerable<Expense>> GetMyExpenses();
+        Task<IEnumerable<Expense>> GetAllExpenses(Guid Id);
 
         Task<Expense> GetExpenseById(Guid Id);
 

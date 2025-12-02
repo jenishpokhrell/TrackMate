@@ -45,7 +45,23 @@ namespace backend.Controllers
         {
             try
             {
-                var result = await _expenseService.GetMyTotalExpensesAsync(User);
+                var result = await _expenseService.GetTotalExpensesAsync();
+                return Ok(result);
+            }
+            catch (ApplicationException ex)
+            {
+                return BadRequest(ex.Message);
+            }
+        }
+
+        [HttpGet]
+        [Route("get-all-expenses")]
+        [Authorize]
+        public async Task<IActionResult> GetAllExpenses(Guid Id)
+        {
+            try
+            {
+                var result = await _expenseService.GetAllExpensesAsync(Id);
                 return Ok(result);
             }
             catch (ApplicationException ex)

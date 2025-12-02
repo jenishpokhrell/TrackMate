@@ -28,7 +28,7 @@ namespace backend.Services.Shared
             try
             {
                 _logger.LogInformation("Creating Account for Duo Person");
-                var account = new Account
+                var createAccount = new Account
                 {
                     Name = accountDto.Name,
                     Gender = accountDto.Gender,
@@ -38,7 +38,7 @@ namespace backend.Services.Shared
                     AccountGroupId = accountDto.AccountGroupId
                 };
 
-                _context.Accounts.Add(account);
+                _context.Accounts.Add(createAccount);
                 _logger.LogInformation("Account for {Name} created successfully. ", accountDto.Name);
 
                 return Task.CompletedTask;
@@ -55,7 +55,7 @@ namespace backend.Services.Shared
             try
             {
                 _logger.LogInformation("Creating Account for Individual User");
-                var account = new Account
+                var createAccount = new Account
                 {
                     Name = accountDto.Name,
                     Gender = accountDto.Gender,
@@ -65,7 +65,7 @@ namespace backend.Services.Shared
                     AccountGroupId = accountDto.AccountGroupId
                 };
 
-                _context.Accounts.Add(account);
+                _context.Accounts.Add(createAccount);
                 //await _context.SaveChangesAsync();
                 _logger.LogInformation("Account for {Name} created successfully.", accountDto.Name);
 

@@ -37,9 +37,9 @@ namespace backend.Services.Shared.SharedBudget
             {
                 var currentLoggedInUserId = _userContext.GetCurrentLoggedInUserID();
 
-                var accountGroupId = await _findAccountGroupId.FindAccountGroupIdAsync(currentLoggedInUserId);
+                var accountGroupId = await _findAccountGroupId.FindAccountGroupIdAsync(currentLoggedInUserId.ToString());
 
-                var name = await _context.Accounts.Where(a => a.UserId == currentLoggedInUserId).Select(a => a.Name).FirstOrDefaultAsync();
+                var name = await _context.Accounts.Where(a => a.UserId == currentLoggedInUserId.ToString()).Select(a => a.Name).FirstOrDefaultAsync();
 
                 var budget = new Budget
                 {

@@ -303,8 +303,7 @@ namespace backend
 
             var userId = await _userManager.FindByIdAsync(user.Id);
 
-            var account = await _context.Accounts.Include(a => a.AccountGroup)
-                .FirstOrDefaultAsync(a => a.UserId == user.Id);
+            var account = await _context.Accounts.Include(a => a.AccountGroup).FirstOrDefaultAsync(a => a.UserId == user.Id);
 
             if (account is null)
             {

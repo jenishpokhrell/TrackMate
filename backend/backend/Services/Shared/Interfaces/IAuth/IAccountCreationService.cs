@@ -1,4 +1,5 @@
 ﻿using backend.Core.Dto.GeneralDto;
+using backend.Model;
 using backend.Model.Dto.Auth;
 using System;
 using System.Collections.Generic;

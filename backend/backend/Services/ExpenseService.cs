@@ -120,6 +120,32 @@ namespace backend.Core.Services
             return _mapper.Map<GetTotalExpensesDto>(totalExpense);
         }
 
+        public async Task<IEnumerable<GetExpenseDto>> GetAllBudgetsAsync()
+        {
+            _logger.LogInformation("Fetching all budgets for a user...");
+            try
+            {
+                var userId = _userContext.GetCurrentLoggedInUserID();
+
+                var accountGroupId = await _findAccountGroupId.FindAccountGroupIdAsync(userId);
+
+                var budgets = await _expenseRepository.GetAllExpenses(accountGroupId);
+
+                if (budgets is null)
+                {
+                    throw new Exception("You have't added your budget");
+                }
+
+                _logger.LogInformation("Successfully fetched budget data.");
+                return _mapper.Map<IEnumerable<GetExpenseDto>>(budgets);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError("Budget fetch failed", ex);
+                throw new Exception("Couldn't fetch list of budgets for user.");
+            }
+        }
+
         public async Task<GeneralServiceResponseDto> UpdateExpenseAsync(UpdateExpenseDto updateExpenseDto, Guid Id)
         {
             if(updateExpenseDto is null)
@@ -162,6 +188,7 @@ namespace backend.Core.Services
                 await _context.SaveChangesAsync();
                 await transaction.CommitAsync();
 
+                _logger.LogInformation("Successful update of expense data and addition of notification.");
                 return new GeneralServiceResponseDto()
                 {
                     Success = true,

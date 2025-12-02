@@ -46,13 +46,13 @@ namespace backend.Core.Repositories
             }
         }
 
-        public async Task<IEnumerable<Expense>> GetMyExpenses()
+        public async Task<IEnumerable<Expense>> GetAllExpenses(Guid Id)
         {
-            var query = "SELECT * FROM Expenses";
+            var query = "SELECT * FROM Expenses WHERE AccountGroupId = @Id";
 
             using(var connection = _dbo.CreateConnection())
             {
-                return await connection.QueryAsync<Expense>(query);
+                return await connection.QueryAsync<Expense>(query, new { Id });
             }
         }
 
@@ -86,7 +86,6 @@ namespace backend.Core.Repositories
             {
                 await connection.ExecuteAsync(query, parameters);
             }
-
         }
 
         public async Task DeleteExpense(Guid Id)

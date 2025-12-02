@@ -14,7 +14,7 @@ namespace backend.Model
         public Guid AccountTypeId { get; set; }
         public AccountType AccountType { get; set; }
 
-        public string? AdminUserId { get; set; }
+        public string AdminUserId { get; set; }
         public ApplicationUser AdminUser { get; set; }
 
         public ICollection<Account> Accounts { get; set; }

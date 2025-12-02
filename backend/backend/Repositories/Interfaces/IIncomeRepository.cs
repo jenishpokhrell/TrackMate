@@ -15,6 +15,10 @@ namespace backend.Core.Interfaces.IRepositories
 
         Task<decimal> GetTotalIncome(Guid accountGroupId);
 
+        Task<IEnumerable<GetIncomeDto>> GetIncomes(Guid Id);
+
         Task UpdateIncome(UpdateIncomeDto updateIncomeDto, Guid Id);
+
+        Task DeleteIncome(Guid Id);
     }
 }
