@@ -16,7 +16,7 @@ namespace backend.Core.Interfaces.IServices
 
         Task<GetTotalExpensesDto> GetTotalExpensesAsync();
 
-        Task<IEnumerable<GetExpenseDto>> GetAllExpensesAsync(Guid Id);
+        Task<IEnumerable<GetExpenseDto>> GetAllExpensesAsync();
 
         Task<GeneralServiceResponseDto> UpdateExpenseAsync(UpdateExpenseDto updateExpenseDto, Guid Id);
 

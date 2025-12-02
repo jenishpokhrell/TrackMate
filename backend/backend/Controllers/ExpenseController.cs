@@ -57,11 +57,11 @@ namespace backend.Controllers
         [HttpGet]
         [Route("get-all-expenses")]
         [Authorize]
-        public async Task<IActionResult> GetAllExpenses(Guid Id)
+        public async Task<IActionResult> GetAllExpenses()
         {
             try
             {
-                var result = await _expenseService.GetAllExpensesAsync(Id);
+                var result = await _expenseService.GetAllExpensesAsync();
                 return Ok(result);
             }
             catch (ApplicationException ex)

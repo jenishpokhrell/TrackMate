@@ -3,6 +3,7 @@ using backend.Dto.Auth;
 using backend.Dto.Budget;
 using backend.Dto.Expense;
 using backend.Model;
+using backend.Model.Dto.Expense;
 using backend.Model.Dto.Income;
 using System;
 using System.Collections.Generic;
@@ -21,6 +22,7 @@ namespace backend.Helpers
             CreateMap<decimal, GetTotalExpensesDto>().ForMember(dest => dest.TotalExpenses, opt => opt.MapFrom(src => src));
             CreateMap<decimal, GetTotalIncomeDto>().ForMember(dest => dest.TotalIncome, opt => opt.MapFrom(src => src));
             CreateMap<Income, GetIncomeDto>().ReverseMap();
+            CreateMap<Expense, GetExpenseDto>().ReverseMap();
         }
     }
 }
