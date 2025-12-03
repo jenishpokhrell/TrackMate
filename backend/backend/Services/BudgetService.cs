@@ -97,7 +97,6 @@ namespace backend.Core.Services
                 {
                     _logger.LogWarning("Transaction already completed, skipping rollback.");
                 }
-
                 _logger.LogError("Budget adding failed.");
                 return ErrorResponse.CreateErrorResponse(500, $"An error occured while adding budget: {ex.Message}");
             }

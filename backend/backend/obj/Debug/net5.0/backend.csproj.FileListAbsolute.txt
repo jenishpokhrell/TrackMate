@@ -90,3 +90,6 @@ C:\Users\jenish.p\Expense Tracker\backend\backend\obj\Debug\net5.0\backend.dll
 C:\Users\jenish.p\Expense Tracker\backend\backend\obj\Debug\net5.0\ref\backend.dll
 C:\Users\jenish.p\Expense Tracker\backend\backend\obj\Debug\net5.0\backend.pdb
 C:\Users\jenish.p\Expense Tracker\backend\backend\obj\Debug\net5.0\backend.genruntimeconfig.cache
+C:\Users\jenish.p\Expense Tracker\backend\backend\bin\Debug\net5.0\Castle.Core.dll
+C:\Users\jenish.p\Expense Tracker\backend\backend\bin\Debug\net5.0\FluentAssertions.dll
+C:\Users\jenish.p\Expense Tracker\backend\backend\bin\Debug\net5.0\Moq.dll
