@@ -12,8 +12,6 @@ namespace backend.Core.Interfaces.IServices
     {
         Task<GeneralServiceResponseDto> AddBudgetAsync(AddBudgetDto budgetDto);
 
-        Task<GetBudgetDto> GetMyBudgetAsync();
-
         Task<IEnumerable<GetBudgetDto>> GetAllBudgetsAsync();
 
         Task<GetBudgetDto> GetMyRemainingBudgetAsync();

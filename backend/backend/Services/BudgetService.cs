@@ -6,6 +6,7 @@ using backend.Core.Interfaces.IServices;
 using backend.Core.Services.Shared;
 using backend.DataContext;
 using backend.Dto.Budget;
+using backend.Exceptions;
 using backend.Model;
 using backend.Model.Dto.Shared;
 using backend.Services;
@@ -97,34 +98,10 @@ namespace backend.Core.Services
                 {
                     _logger.LogWarning("Transaction already completed, skipping rollback.");
                 }
-                _logger.LogError("Budget adding failed.");
-                return ErrorResponse.CreateErrorResponse(500, $"An error occured while adding budget: {ex.Message}");
+                _logger.LogError(ex, "Budget adding failed.");
+                return ErrorResponse.CreateErrorResponse(500, $"An unexpected error occured while adding budget: {ex}");
             }
         }
-
-        public async Task<GetBudgetDto> GetMyBudgetAsync()
-        {
-            _logger.LogInformation("Getting user's budget...");
-            try
-            {
-                var currentLoggedInUser = _userContext.GetCurrentLoggedInUserID();
-
-                var budget = await _context.Budgets.FirstOrDefaultAsync(b => b.UserId == currentLoggedInUser);
-
-                if(budget is null)
-                {
-                    throw new Exception("You haven't added your budget yet.");
-                }
-
-                return _mapper.Map<GetBudgetDto>(budget);
-            }
-            catch(Exception ex)
-            {
-                _logger.LogError("Budget fetch failed", ex);
-                throw new Exception("Couldn't fetch remaining budget.");
-            }
-        }
-
 
         public async Task<IEnumerable<GetBudgetDto>> GetAllBudgetsAsync()
         {
@@ -147,8 +124,8 @@ namespace backend.Core.Services
             }
             catch (Exception ex)
             {
-                _logger.LogError("Budget fetch failed", ex);
-                throw new Exception("Couldn't fetch list of budgets for user.");
+                _logger.LogError(ex, "Budget fetch failed");
+                throw new BudgetException($"An unexpected error occured while fetching budgets: {ex}");
             }
         }
 
@@ -174,7 +151,7 @@ namespace backend.Core.Services
             catch(Exception ex)
             {
                 _logger.LogError("Couldn't fetch remaining budget", ex);
-                throw new Exception("Couldn't fetch remaining budget");
+                throw new Exception($"An unexpected error occured while fetching remaining budget: {ex.Message}");
             }
         }
 
@@ -237,7 +214,7 @@ namespace backend.Core.Services
                     _logger.LogWarning("Transaction already completed, skipping rollback.");
                 }
                 _logger.LogError("Updating budget failed", ex);
-                return ErrorResponse.CreateErrorResponse(400, "Updating budget failed.");
+                return ErrorResponse.CreateErrorResponse(500, "Error occured while updating budget");
             }
         }
 
@@ -272,7 +249,7 @@ namespace backend.Core.Services
             catch(Exception ex)
             {
                 _logger.LogError("Budget Deletion failed.", ex);
-                return ErrorResponse.CreateErrorResponse(400, "Budget deletion failed.");
+                return ErrorResponse.CreateErrorResponse(500, "Error occured while deleting budget");
             }
             
         }
