@@ -1,4 +1,5 @@
 ﻿using backend.DataContext;
+using backend.Exceptions;
 using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;

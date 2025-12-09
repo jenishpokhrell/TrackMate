@@ -34,7 +34,7 @@ namespace backend.Services.Shared
 
                 if (accountType is null)
                 {
-                    throw new GroupNotFormedException("Duo account type not found");
+                    throw new AccountGroupException("Duo account type not found");
                 }
 
                 var group = new AccountGroup
@@ -50,10 +50,10 @@ namespace backend.Services.Shared
                 return group;
 
             }
-            catch (Exception ex) when (!(ex is GroupNotFormedException))
+            catch (Exception ex) when (!(ex is AccountGroupException))
             {
                 _logger.LogError(ex, "Account Group creation for {GroupName} failed.", accountGroupDto.Name);
-                throw new GroupNotFormedException($"Failed to create account group for '{accountGroupDto.Name}'.", ex);
+                throw new AccountGroupException($"Failed to create account group for '{accountGroupDto.Name}'.", ex);
             }
         }
 
@@ -66,7 +66,7 @@ namespace backend.Services.Shared
 
                 if(accountType is null)
                 {
-                    throw new GroupNotFormedException("Duo account type not found");   
+                    throw new AccountGroupException("Duo account type not found");   
                 }
 
                 var group = new AccountGroup
@@ -81,10 +81,10 @@ namespace backend.Services.Shared
 
                 return group;
                 
-            } catch(Exception ex) when (!(ex is GroupNotFormedException))
+            } catch(Exception ex) when (!(ex is AccountGroupException))
             {
                 _logger.LogError(ex, "Account Group creation for {GroupName} failed.", accountGroupDto.Name);
-                throw new GroupNotFormedException($"Failed to create account group for '{accountGroupDto.Name}'.", ex);
+                throw new AccountGroupException($"Failed to create account group for '{accountGroupDto.Name}'.", ex);
             }
         }
     }

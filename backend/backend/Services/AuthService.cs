@@ -5,10 +5,13 @@ using backend.Core.Interfaces.IServices;
 using backend.Core.Services.Shared;
 using backend.DataContext;
 using backend.Dto.Auth;
+using backend.Exceptions;
 using backend.Helpers;
 using backend.Model;
 using backend.Model.Dto.Auth;
 using backend.Model.Dto.Shared;
+using backend.Repositories.Interfaces;
+using backend.Services.Helpers;
 using backend.Services.Interfaces;
 using backend.Services.Shared.Interfaces;
 using Microsoft.AspNetCore.Identity;
@@ -17,6 +20,7 @@ using Microsoft.EntityFrameworkCore.Storage;
 using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
 using System.Linq;
 using System.Security.Claims;
 using System.Threading.Tasks;
@@ -36,10 +40,15 @@ namespace backend
         private readonly IUserCreationService _userCreationService;
         private readonly IGroupCreationService _groupCreationService;
         private readonly IAccountCreationService _accountCreationService;
+        private readonly IFindAccountById _findAccountById;
+        private readonly IFindAccountGroupId _findAccountGroupId;
+        private readonly IUserContextService _userContext;
+        //private readonly IAuthRepository _authRepository;
 
         public AuthService(RoleManager<IdentityRole> roleManager, UserManager<ApplicationUser> userManager, IMapper mapper, ILogger<AuthService> logger,
            IRoleManagementService roleManagementService, ApplicationDbContext context, INotificationService notificationService, GenereteJWTToken generateJWTToken,
-           IUserCreationService userCreationService, IGroupCreationService groupCreationService, IAccountCreationService accountCreationService)
+           IUserCreationService userCreationService, IGroupCreationService groupCreationService, IAccountCreationService accountCreationService,
+           IFindAccountById findAccountById, IFindAccountGroupId findAccountGroupId, IUserContextService userContext)
         {
             _roleManager = roleManager ?? throw new ArgumentNullException(nameof(roleManager));
             _userManager = userManager ?? throw new ArgumentNullException(nameof(userManager));
@@ -52,6 +61,9 @@ namespace backend
             _userCreationService = userCreationService ?? throw new ArgumentNullException(nameof(userCreationService));
             _groupCreationService = groupCreationService ?? throw new ArgumentNullException(nameof(groupCreationService));
             _accountCreationService = accountCreationService ?? throw new ArgumentNullException(nameof(accountCreationService));
+            _findAccountById = findAccountById ?? throw new ArgumentNullException(nameof(findAccountById));
+            _findAccountGroupId = findAccountGroupId ?? throw new ArgumentNullException(nameof(findAccountGroupId));
+            _userContext = userContext ?? throw new ArgumentNullException(nameof(userContext));
         }
 
         public async Task<GeneralServiceResponseDto> RegisterIndividualAsync(RegisterUser userDto)
@@ -59,7 +71,7 @@ namespace backend
             if(userDto == null)
             {
                 _logger.LogWarning("Registration attempt with null data.");
-                return ErrorResponse.CreateErrorResponse(400, "Invalid registration data provided");
+                throw new ValidationException("Registration attempt with null data");
             }
 
             using var transaction = await _context.Database.BeginTransactionAsync();
@@ -106,29 +118,21 @@ namespace backend
                     _logger.LogInformation("Registration for {Name} done successfully.", userDto.Username);
 
                     await transaction.CommitAsync();
-                }
-            }
-            catch(Exception ex)
-            {
-                try
-                {
-                    await transaction.RollbackAsync(); 
-                }
-                catch (InvalidOperationException)
-                {
-                    _logger.LogWarning("Transaction already completed, skipping rollback.");
-                }
-                _logger.LogError("Registration failed for {Name} done successfully.", userDto.Username);
-                throw new UserRegistrationException("An error occured while registering user", ex);
-            }
-            
-            return new GeneralServiceResponseDto
-            {
-                StatusCode = 201,
-                Success = true,
-                Message = "Individual Account Created Successfully."
-            };
 
+                    return new GeneralServiceResponseDto
+                    {
+                        StatusCode = 201,
+                        Success = true,
+                        Message = "Individual Account Created Successfully."
+                    };
+                }
+            }
+            catch(AuthException ex)
+            {
+                await transaction.RollbackAsync(); 
+                _logger.LogError("Registration failed for {Name} done successfully.", userDto.Username);
+                throw new AuthException("An error occured while registering user", ex);
+            }
         }
 
         public async Task<GeneralServiceResponseDto> RegisterDuoPerson1Async(RegisterUser userDto)
@@ -136,7 +140,7 @@ namespace backend
             if(userDto is null)
             {
                 _logger.LogWarning("Registration attempt with null data.");
-                return ErrorResponse.CreateErrorResponse(400, "Invalid registration data provided");
+                throw new ValidationException("Invalid registration data provided");
             }
 
             using var transaction = await _context.Database.BeginTransactionAsync();
@@ -185,27 +189,21 @@ namespace backend
                 _logger.LogInformation("Registration for {Name} done successfully.", userDto.Name);
 
                 await transaction.CommitAsync();
-            }
-            catch (Exception ex)
-            {
-                try
-                {
-                    await transaction.RollbackAsync();  // Only if not yet completed
-                }
-                catch (InvalidOperationException)
-                {
-                    _logger.LogWarning("Transaction already completed, skipping rollback.");
-                }
-                _logger.LogError("Registration failed for {Name} done successfully.", userDto.Username);
-                throw new UserRegistrationException("An error occured while registering user", ex);
-            }
 
-            return new GeneralServiceResponseDto
+                return new GeneralServiceResponseDto
+                {
+                    StatusCode = 201,
+                    Success = true,
+                    Message = "Duo Account for Person 1 Created Successfully."
+                };
+
+            }
+            catch (AuthException ex)
             {
-                StatusCode = 201,
-                Success = true,
-                Message = "Duo Account for Person 1 Created Successfully."
-            };
+                await transaction.RollbackAsync();
+                _logger.LogError("Registration failed for {Name} done successfully.", userDto.Username);
+                throw new AuthException("An error occured while registering user", ex);
+            }
         }
 
         public async Task<GeneralServiceResponseDto> RegisterDuoPerson2Async(RegisterUser userDto)
@@ -213,7 +211,7 @@ namespace backend
             if(userDto is null)
             {
                 _logger.LogWarning("Registration attemting with null data.");
-                return ErrorResponse.CreateErrorResponse(404, "Invalid registration data provided");
+                throw new ValidationException("Invalid registration data provided");
             }
 
             using var transaction = await _context.Database.BeginTransactionAsync();
@@ -226,14 +224,14 @@ namespace backend
 
                 if (group is null)
                 {
-                    return ErrorResponse.CreateErrorResponse(404, "Group Not Found");
+                    throw new NotFoundException("Group Not Found");
                 }
 
                 var accountCount = await _context.Accounts.CountAsync(a => a.AccountGroupId == group.Id);
 
                 if (accountCount >= group.AccountType.MaxAccounts)
                 {
-                    return ErrorResponse.CreateErrorResponse(400, "Duo type exceeded number of users. If you want to join us you can create " +
+                    throw new ValidationException("Duo type exceeded number of users. If you want to join us you can create " +
                         "your new account, Individual or Duo, whatever suits you.");
                 }
 
@@ -268,29 +266,19 @@ namespace backend
                 _logger.LogInformation("Registration for {Name} done successfully.", userDto.Name);
 
                 await transaction.CommitAsync();
-
+                return new GeneralServiceResponseDto
+                {
+                    StatusCode = 201,
+                    Success = true,
+                    Message = "Duo Account for Person 2 Created Successfully."
+                };
             }
-            catch(Exception ex)
+            catch (AuthException ex)
             {
-                try
-                {
-                    await transaction.RollbackAsync();
-                }
-                catch(InvalidOperationException)
-                {
-                    _logger.LogWarning("Transaction completed. Skipping transaction rollback.");
-                }
-
+                await transaction.RollbackAsync();
                 _logger.LogError("Registration failed for {Name} done successfully.", userDto.Username);
-                throw new UserRegistrationException("An error occured while registering user", ex);
-            }
-
-            return new GeneralServiceResponseDto
-            {
-                StatusCode = 201,
-                Success = true,
-                Message = "Duo Account for Person 2 Created Successfully."
-            };
+                throw new AuthException("An error occured while registering user", ex);
+            }      
         }
 
         public async Task<LoginServiceResponseDto> LoginAsync(LoginDto loginDto)
@@ -298,7 +286,7 @@ namespace backend
             var user = await _userManager.FindByEmailAsync(loginDto.Email);
             if(user is null)
             {
-                throw new Exception("User not found");
+                throw new NotFoundException("User not found");
             }
 
             var userId = await _userManager.FindByIdAsync(user.Id);
@@ -307,14 +295,14 @@ namespace backend
 
             if (account is null)
             {
-                throw new Exception("Account not found");
+                throw new NotFoundException("Account not found");
             }
 
             var isPasswordCorrect = await _userManager.CheckPasswordAsync(user, loginDto.Password);
 
             if (!isPasswordCorrect)
             {
-                throw new Exception("Incorrect Password");
+                throw new UnauthorizedAccessException("User not authenticated.");
             }
 
             var newToken = await _generateJWTToken.GenerateToken(user);
@@ -328,10 +316,36 @@ namespace backend
             };
         }
 
+        public async Task<UserInfo> GetUserByIdAsync(string UserId)
+        {
+            var loggedInUserId = _userContext.GetCurrentLoggedInUserID();
+
+            var user = await _userManager.FindByIdAsync(UserId);
+
+            if (user is null)
+                throw new NotFoundException("User not found.");
+
+            var account = await _findAccountById.GetAccountById(UserId);
+            var accountGroupId = await _findAccountGroupId.FindAccountGroupIdAsync(loggedInUserId);
+            var role = await _userManager.GetRolesAsync(user);
+
+            /*var group = user.Account.AccountGroupId.ToString();
+            _logger.LogInformation(group);*/
+
+            if (account.AccountGroupId != accountGroupId && user.Id != loggedInUserId && role.Contains(StaticUserRoles.ADMIN))
+                throw new ForbiddenException("You are not authorized to access this data.");
+
+            var roles = await _userManager.GetRolesAsync(user);
+            var userInfo = GenerateUserInfo(user, roles, account);
+
+            return _mapper.Map<UserInfo>(userInfo);
+        }
+
         private UserInfo GenerateUserInfo(ApplicationUser User, IList<string> roles, Account account)
         {
             return new UserInfo
             {
+                Id = User.Id,
                 Email = User.Email,
                 Username = User.UserName,
                 Contact = User.PhoneNumber,

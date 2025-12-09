@@ -15,5 +15,6 @@ namespace backend.Core.Interfaces.IServices
         Task<GeneralServiceResponseDto> RegisterDuoPerson1Async(RegisterUser userDto);
         Task<GeneralServiceResponseDto> RegisterDuoPerson2Async(RegisterUser userDto);
         Task<LoginServiceResponseDto> LoginAsync(LoginDto loginDto);
+        Task<UserInfo> GetUserByIdAsync(string UserId);
     }
 }

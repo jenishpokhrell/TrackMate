@@ -27,15 +27,8 @@ namespace backend.Controllers
         [Authorize]
         public async Task<IActionResult> AddIncome([FromBody] AddIncomeDto addIncomeDto)
         {
-            try
-            {
-                var result = await _incomeService.AddIncomeAsync(addIncomeDto);
-                return StatusCode(result.StatusCode, result.Message);
-            }
-            catch(ApplicationException ex)
-            {
-                return BadRequest(ex.Message);
-            }
+            var result = await _incomeService.AddIncomeAsync(addIncomeDto);
+            return StatusCode(result.StatusCode, result.Message);
         }
 
         [HttpGet]
@@ -43,15 +36,8 @@ namespace backend.Controllers
         [Authorize]
         public async Task<IActionResult> GetIncomes()
         {
-            try
-            {
-                var result = await _incomeService.GetIncomesAsync();
-                return Ok(result);
-            }
-            catch(ApplicationException ex)
-            {
-                return BadRequest(ex.Message);
-            }
+            var result = await _incomeService.GetIncomesAsync();
+            return Ok(result);
         }
 
         [HttpGet]
@@ -59,15 +45,8 @@ namespace backend.Controllers
         [Authorize]
         public async Task<IActionResult> GetTotalIncomeAmount()
         {
-            try
-            {
-                var result = await _incomeService.GetTotalIncomeAsync();
-                return Ok(result);
-            }
-            catch(ApplicationException ex)
-            {
-                return BadRequest(ex.Message);
-            }
+            var result = await _incomeService.GetTotalIncomeAsync();
+            return Ok(result);
         }
 
         [HttpPut]
@@ -75,15 +54,8 @@ namespace backend.Controllers
         [Authorize]
         public async Task<IActionResult> UpdateIncome([FromBody] UpdateIncomeDto updateIncomeDto, Guid Id)
         {
-            try
-            {
-                var result = await _incomeService.UpdateIncomeAsync(updateIncomeDto, Id);
-                return StatusCode(result.StatusCode, result.Message);
-            }
-            catch(ApplicationException ex)
-            {
-                return BadRequest(ex.Message);
-            }
+            var result = await _incomeService.UpdateIncomeAsync(updateIncomeDto, Id);
+            return StatusCode(result.StatusCode, result.Message);
         }
 
         [HttpDelete]
@@ -91,15 +63,8 @@ namespace backend.Controllers
         [Authorize]
         public async Task<IActionResult> DeleteIncome(Guid Id)
         {
-            try
-            {
-                var result = await _incomeService.DeleteIncomesAsync(Id);
-                return StatusCode(result.StatusCode, result.Message);
-            }
-            catch (ApplicationException ex)
-            {
-                return BadRequest(ex.Message);
-            }
+            var result = await _incomeService.DeleteIncomesAsync(Id);
+            return StatusCode(result.StatusCode, result.Message);
         }
     }
 }

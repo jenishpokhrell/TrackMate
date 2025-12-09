@@ -6,6 +6,7 @@ using backend.Core.Interfaces.IServices;
 using backend.Core.Services.Shared;
 using backend.DataContext;
 using backend.Dto.Income;
+using backend.Exceptions;
 using backend.Model;
 using backend.Model.Dto.Income;
 using backend.Model.Dto.Shared;
@@ -17,6 +18,7 @@ using Microsoft.EntityFrameworkCore.Storage;
 using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
 using System.Linq;
 using System.Security.Claims;
 using System.Threading.Tasks;
@@ -50,14 +52,14 @@ namespace backend.Core.Services
         {
             if (addIncomeDto is null)
             {
-                _logger.LogWarning("Attempted to add expense with null data.");
-                return ErrorResponse.CreateErrorResponse(400, "Attempted Expense addition with null data.");
+                _logger.LogWarning("Attempted to add income with null data.");
+                throw new ValidationException("Attempted income addition with null data.");
             }
 
             using var transaction = await _context.Database.BeginTransactionAsync();
             try
             {
-                _logger.LogInformation("Initializing adding expenses...");
+                _logger.LogInformation("Initializing adding income...");
 
                 var income = new AddIncomeDto
                 {
@@ -72,7 +74,7 @@ namespace backend.Core.Services
                 var notification = new AddNotificationDto
                 {
                     Type = StaticNotificationTypes.incomeUpdate,
-                    Message = "Your expenses has been added successfully.",
+                    Message = "Your income has been added successfully.",
                     IsRead = false,
                 };
 
@@ -86,75 +88,47 @@ namespace backend.Core.Services
                 {
                     Success = true,
                     StatusCode = 201,
-                    Message = "Expenses added successfully."
+                    Message = "Income added successfully."
                 };
             }
-            catch (Exception ex)
+            catch (IncomeException ex)
             {
-                try
-                {
-                    await transaction.RollbackAsync();
-                }
-                catch (InvalidOperationException)
-                {
-                    _logger.LogWarning("Transaction already completed, skipping rollback.");
-                }
-                return ErrorResponse.CreateErrorResponse(500, $"An error occured while adding expenses: {ex.Message}");
+                await transaction.RollbackAsync();  
+                _logger.LogError("Couldn't add income...");
+                throw new IncomeException($"An error occured while adding income: {ex.Message}");
             }
-
         }
 
         public async Task<IEnumerable<GetIncomeDto>> GetIncomesAsync()
         {
             _logger.LogInformation("Getting all income data...");
-            try
-            {
-                var currentLoggedInUser = _userContext.GetCurrentLoggedInUserID();
+            var currentLoggedInUser = _userContext.GetCurrentLoggedInUserID();
+            var accountGroupId = await _findAccountGroupId.FindAccountGroupIdAsync(currentLoggedInUser);
 
-                var accountGroupId = await _findAccountGroupId.FindAccountGroupIdAsync(currentLoggedInUser);
+            if (accountGroupId == Guid.Empty)
+                throw new NotFoundException("Account Group not found.");
 
-                var incomes = await _incomeRepository.GetIncomes(accountGroupId);
+            var incomes = await _incomeRepository.GetIncomes(accountGroupId);
 
-                if(incomes is null)
-                {
-                    throw new Exception("You haven't added your income yet.");
-                }
-
-                return _mapper.Map<IEnumerable<GetIncomeDto>>(incomes);
-            }
-            catch(Exception ex)
-            {
-                _logger.LogError(ex, "Error while fetching income data.");
-                throw new Exception("Error While fetching income data", ex);
-            }
+            return incomes.Any() == true 
+                ? _mapper.Map<IEnumerable<GetIncomeDto>>(incomes)
+                : throw new NotFoundException("You haven't added your income yet.");
         }
 
         public async Task<GetTotalIncomeDto> GetTotalIncomeAsync()
         {
-            try
-            {
-                _logger.LogInformation("Getting total income data...");
+            _logger.LogInformation("Getting total income data...");
 
-                var currentUserId = _userContext.GetCurrentLoggedInUserID();
+            var currentUserId = _userContext.GetCurrentLoggedInUserID();
 
-                var accountGroupId = await _findAccountGroupId.FindAccountGroupIdAsync(currentUserId);
+            var accountGroupId = await _findAccountGroupId.FindAccountGroupIdAsync(currentUserId);
 
-                if(accountGroupId == Guid.Empty)
-                {
-                    _logger.LogError("Account Group Not Found.");
-                    throw new Exception("Cannot find account group");
-                }
+            if (accountGroupId == Guid.Empty)
+                throw new NotFoundException("Account Group not found");
 
-                var totalIncome = await _incomeRepository.GetTotalIncome(accountGroupId);
+            var totalIncome = await _incomeRepository.GetTotalIncome(accountGroupId);
 
-                _logger.LogInformation("Successfully fetched total income.");
-                return _mapper.Map<GetTotalIncomeDto>(totalIncome);
-            }
-            catch(Exception ex)
-            {
-                _logger.LogError(ex, "Error while fetching income data.");
-                throw new Exception("Error While fetching income data", ex);
-            }
+            return _mapper.Map<GetTotalIncomeDto>(totalIncome);
         }
 
         public async Task<GeneralServiceResponseDto> UpdateIncomeAsync(UpdateIncomeDto updateIncomeDto, Guid Id)
@@ -162,28 +136,25 @@ namespace backend.Core.Services
             if(updateIncomeDto is null)
             {
                 _logger.LogError("Updating data with null value.");
-                throw new Exception("Updating data with null value.");
+                throw new ValidationException("Updating data with null value.");
             }
 
             using var transaction = await _context.Database.BeginTransactionAsync();
+
+            _logger.LogInformation("Initialization of updating income data...");
+
+            var currentIncome = await _incomeRepository.GetIncomeById(Id);
+
+            if (currentIncome is null)
+                throw new NotFoundException("Income not found");
+
+            var currentLoggedInUser = _userContext.GetCurrentLoggedInUserID();
+
+            if (currentIncome.UserId != currentLoggedInUser)
+                throw new ForbiddenException("You are not authorized to update this income");
+
             try
             {
-                _logger.LogInformation("Initialization of updating income data...");
-
-                var currentIncome = await _incomeRepository.GetIncomeById(Id);
-
-                if(currentIncome is null)
-                {
-                    return ErrorResponse.CreateErrorResponse(404, "No income found");
-                }
-
-                var currentLoggedInUser = _userContext.GetCurrentLoggedInUserID();
-
-                if(currentIncome.UserId != currentLoggedInUser)
-                {
-                    return ErrorResponse.CreateErrorResponse(401, "You are not authorized to update this income");
-                }
-
                 await _incomeRepository.UpdateIncome(updateIncomeDto, Id);
 
                 var notification = new AddNotificationDto
@@ -207,56 +178,34 @@ namespace backend.Core.Services
                     Message = "Income has been updated successfully."
                 };
             }
-            catch(Exception ex)
+            catch(IncomeException ex)
             {
-                try
-                {
-                    await transaction.RollbackAsync();
-                }
-                catch
-                {
-                    _logger.LogWarning("Transaction already completed, skipping rollback.");
-                }
+                await transaction.RollbackAsync();
                 _logger.LogError("Updating income failed", ex);
-                return ErrorResponse.CreateErrorResponse(400, $"Updating income failed: {ex.Message}");
+                throw new IncomeException($"Updating income failed: {ex.Message}");
             }
         }
 
         public async Task<GeneralServiceResponseDto> DeleteIncomesAsync(Guid Id)
         {
-            _logger.LogInformation("Initialization of deleting income...");
-            try
+            var currentIncome = await _incomeRepository.GetIncomeById(Id);
+
+            if(currentIncome is null)
+                throw new NotFoundException("Income not found");
+
+            var currentLoggedInUser = _userContext.GetCurrentLoggedInUserID();
+
+            if(currentIncome.UserId != currentLoggedInUser)
+                throw new ForbiddenException("You are not authorized to delete this income");
+
+            await _incomeRepository.DeleteIncome(Id);
+
+            return new GeneralServiceResponseDto
             {
-                var currentIncome = await _incomeRepository.GetIncomeById(Id);
-
-                if(currentIncome is null)
-                {
-                    return ErrorResponse.CreateErrorResponse(404, "No income found");
-                }
-
-                var currentLoggedInUser = _userContext.GetCurrentLoggedInUserID();
-
-                if(currentIncome.UserId != currentLoggedInUser)
-                {
-                    return ErrorResponse.CreateErrorResponse(401, "You are not authorized to delete this income");
-                }
-
-                await _incomeRepository.DeleteIncome(Id);
-
-                _logger.LogInformation("Income Successfully Deleted.");
-
-                return new GeneralServiceResponseDto
-                {
-                    Success = true,
-                    StatusCode = 200,
-                    Message = "Income has been deleted successfully."
-                };
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError("Income Deletion failed.", ex);
-                return ErrorResponse.CreateErrorResponse(400, "Income deletion failed.");
-            }
+                Success = true,
+                StatusCode = 200,
+                Message = "Income has been deleted successfully."
+            };
         }
     }
 }

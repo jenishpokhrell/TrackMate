@@ -26,15 +26,8 @@ namespace backend.Controllers
         [Authorize]
         public async Task<IActionResult> AddBudget(AddBudgetDto budgetDto)
         {
-            try
-            {
-                var result = await _budgetService.AddBudgetAsync(budgetDto);
-                return StatusCode(result.StatusCode, result.Message);
-            }
-            catch(ApplicationException ex)
-            {
-                return BadRequest(ex.Message);
-            }
+            var result = await _budgetService.AddBudgetAsync(budgetDto);
+            return StatusCode(result.StatusCode, result.Message);
         }
 
         [HttpGet]
@@ -42,15 +35,8 @@ namespace backend.Controllers
         [Authorize]
         public async Task<IActionResult> GetMyBudget()
         {
-            try
-            {   
-                var result = await _budgetService.GetMyBudgetAsync();
-                return Ok(result);
-            }
-            catch(ApplicationException ex)
-            {
-                return BadRequest(ex.Message);
-            }
+            var result = await _budgetService.GetAllBudgetsAsync();
+            return Ok(result);
         }
 
         [HttpGet]
@@ -58,15 +44,8 @@ namespace backend.Controllers
         [Authorize]
         public async Task<IActionResult> GetAllBudgets()
         {
-            try
-            {
-                var result = await _budgetService.GetAllBudgetsAsync();
-                return Ok(result);
-            }
-            catch (ApplicationException ex)
-            {
-                return BadRequest(ex.Message);
-            }
+            var result = await _budgetService.GetAllBudgetsAsync();
+            return Ok(result);
         }
 
         [HttpGet]
@@ -74,15 +53,8 @@ namespace backend.Controllers
         [Authorize]
         public async Task<IActionResult> GetMyRemainingBudget()
         {
-            try
-            {
-                var result = await _budgetService.GetMyRemainingBudgetAsync();
-                return Ok(result);
-            }
-            catch (ApplicationException ex)
-            {
-                return BadRequest(ex.Message);
-            }
+            var result = await _budgetService.GetMyRemainingBudgetAsync();
+            return Ok(result);
         }
 
         [HttpPut]
@@ -90,15 +62,8 @@ namespace backend.Controllers
         [Authorize]
         public async Task<IActionResult> UpdateBudget(UpdateBudgetDto updateBudgetDto, Guid id)
         {
-            try
-            {
-                var result = await _budgetService.UpdateBudgetAsync(updateBudgetDto, id);
-                return StatusCode(result.StatusCode, result.Message);
-            }
-            catch (ApplicationException ex)
-            {
-                return BadRequest(ex.Message);
-            }
+           var result = await _budgetService.UpdateBudgetAsync(updateBudgetDto, id);
+           return StatusCode(result.StatusCode, result.Message);
         }
 
 
@@ -107,15 +72,8 @@ namespace backend.Controllers
         [Authorize]
         public async Task<IActionResult> Delete(Guid id)
         {
-            try
-            {
-                var result = await _budgetService.DeleteBudgetAsync(User, id);
-                return StatusCode(result.StatusCode, result.Message);
-            }
-            catch (ApplicationException ex)
-            {
-                return BadRequest(ex.Message);
-            }
+            var result = await _budgetService.DeleteBudgetAsync(User, id);
+            return StatusCode(result.StatusCode, result.Message);
         }
     }
 }

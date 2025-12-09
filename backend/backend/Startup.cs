@@ -4,6 +4,7 @@ using backend.Core.Repositories;
 using backend.Core.Services;
 using backend.DataContext;
 using backend.Helpers;
+using backend.Middleware;
 using backend.Model;
 using backend.Services.Helpers;
 using backend.Services.Interfaces;
@@ -77,6 +78,7 @@ namespace backend
             services.AddScoped<IRoleManagementService, RoleManagementService>();
 
             services.AddScoped<IFindAccountGroupId, FindAccountGroupId>();
+            services.AddScoped<IFindAccountById, FindAccountById>();
 
             services.AddScoped<IUserCreationService, UserCreationService>();
 
@@ -182,6 +184,7 @@ namespace backend
             app.UseHttpsRedirection();
 
             app.UseRouting();
+            app.UseMiddleware<GlobalExceptionMiddleware>();
 
             app.UseAuthentication();
             app.UseAuthorization();

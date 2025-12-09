@@ -6,6 +6,7 @@ using backend.Core.Interfaces.IServices;
 using backend.Core.Services.Shared;
 using backend.DataContext;
 using backend.Dto.Expense;
+using backend.Exceptions;
 using backend.Model;
 using backend.Model.Dto.Expense;
 using backend.Model.Dto.Shared;
@@ -17,6 +18,7 @@ using Microsoft.EntityFrameworkCore.Storage;
 using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
 using System.Linq;
 using System.Security.Claims;
 using System.Threading.Tasks;
@@ -51,7 +53,7 @@ namespace backend.Core.Services
             if (addExpenseDto is null)
             {
                 _logger.LogWarning("Attempted to add expense with null data.");
-                return ErrorResponse.CreateErrorResponse(400, "Attempted Expense addition with null data.");
+                throw new ValidationException("Attempted Expense addition with null data.");
             }
 
             using var transaction = await _context.Database.BeginTransactionAsync();
@@ -89,17 +91,11 @@ namespace backend.Core.Services
                     Message = "Expenses added successfully."
                 };
             }
-            catch (Exception ex)
+            catch (ExpenseException ex)
             {
-                try
-                {
-                    await transaction.RollbackAsync();
-                }
-                catch (InvalidOperationException)
-                {
-                    _logger.LogWarning("Transaction already completed, skipping rollback.");
-                }
-                return ErrorResponse.CreateErrorResponse(500, $"An error occured while adding expenses: {ex.Message}");
+                await transaction.RollbackAsync();
+                _logger.LogError("Error while adding expenses");
+                throw new ExpenseException($"An error occured while adding expenses: {ex.Message}");
             }
         }
 
@@ -112,7 +108,7 @@ namespace backend.Core.Services
 
             if(accountGroupId == Guid.Empty)
             {
-                throw new Exception("AccountGroupId not found");
+                throw new NotFoundException("AccountGroup not found");
             }
 
             var totalExpense = await _expenseRepository.GetTotalExpense(accountGroupId);
@@ -123,27 +119,19 @@ namespace backend.Core.Services
         public async Task<IEnumerable<GetExpenseDto>> GetAllExpensesAsync()
         {
             _logger.LogInformation("Fetching all expenses for a user...");
-            try
-            {
-                var userId = _userContext.GetCurrentLoggedInUserID();
 
-                var accountGroupId = await _findAccountGroupId.FindAccountGroupIdAsync(userId);
+            var userId = _userContext.GetCurrentLoggedInUserID();
+            var accountGroupId = await _findAccountGroupId.FindAccountGroupIdAsync(userId);
 
-                var expenses = await _expenseRepository.GetAllExpenses(accountGroupId);
+            if (accountGroupId == Guid.Empty)
+                throw new NotFoundException("Account Group not found.");
 
-                if (expenses is null)
-                {
-                    throw new Exception("You have't added any expenses");
-                }
+            var expenses = await _expenseRepository.GetAllExpenses(accountGroupId);
 
-                _logger.LogInformation("Successfully fetched expense data.");
-                return _mapper.Map<IEnumerable<GetExpenseDto>>(expenses);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError("Expense fetch failed", ex);
-                throw new Exception("Couldn't fetch list of expense for user.");
-            }
+            _logger.LogInformation("Successfully fetched expense data.");
+            return expenses.Any() == true 
+                ? _mapper.Map<IEnumerable<GetExpenseDto>>(expenses)
+                : throw new NotFoundException("Expenses not found");
         }
 
         public async Task<GeneralServiceResponseDto> UpdateExpenseAsync(UpdateExpenseDto updateExpenseDto, Guid Id)
@@ -151,28 +139,25 @@ namespace backend.Core.Services
             if(updateExpenseDto is null)
             {
                 _logger.LogWarning("Attempted update of expense with null data...");
-                return ErrorResponse.CreateErrorResponse(400, "Updating expense with null data.");
+                throw new  ValidationException("Updating expense with null data.");
             }
 
+            _logger.LogInformation("Initialization of updating expense...");
+
             using var transaction = await _context.Database.BeginTransactionAsync();
+
+            var currentExpense = await _expenseRepository.GetExpenseById(Id);
+
+            if (currentExpense is null)
+                throw new NotFoundException("Couldn't access expense. It either doesn't exist or try again later.");
+
+            var currentLoggedInUser = _userContext.GetCurrentLoggedInUserID();
+
+            if (currentExpense.UserId != currentLoggedInUser)
+                throw new ForbiddenException("You are not authorized to update this expense.");
+
             try
             {
-                _logger.LogInformation("Initialization of updating expense...");
-
-                var currentExpense = await _expenseRepository.GetExpenseById(Id);
-
-                if(currentExpense is null)
-                {
-                    return ErrorResponse.CreateErrorResponse(404, "Couldn't access expense. It either doesn't exist or try again later.");
-                }
-
-                var currentLoggedInUser = _userContext.GetCurrentLoggedInUserID();
-
-                if(currentExpense.UserId != currentLoggedInUser)
-                {
-                    return ErrorResponse.CreateErrorResponse(401, "You are not authorized to update this expense.");
-                }
-
                 await _expenseRepository.UpdateExpense(updateExpenseDto, Id);
 
                 var notification = new AddNotificationDto
@@ -196,55 +181,33 @@ namespace backend.Core.Services
                     Message = "Expense has been updated successfully."
                 };
             }
-            catch (Exception ex)
+            catch (ExpenseException ex)
             {
-                try
-                {
-                    await transaction.RollbackAsync();
-                }
-                catch
-                {
-                    _logger.LogWarning("Transaction already completed, skipping rollback.");
-                }
-                _logger.LogError("Updating expense failed", ex);
-                return ErrorResponse.CreateErrorResponse(400, $"Updating expense failed: {ex.Message}");
+                await transaction.RollbackAsync();
+                _logger.LogError(ex, "Updating expense failed");
+                throw new ExpenseException($"Updating expense failed: {ex.Message}");
             }
         }
 
         public async Task<GeneralServiceResponseDto> DeleteExpenseAsync(Guid Id)
         {
             _logger.LogInformation("Initializing the deletion of expense...");
-            try
+
+            var currentExpense = await _expenseRepository.GetExpenseById(Id);
+            if(currentExpense is null)
+                throw new NotFoundException("Expense not found.");
+
+            var currentLoggedInUser =  _userContext.GetCurrentLoggedInUserID();
+            if(currentExpense.UserId != currentLoggedInUser)
+                throw new ForbiddenException("You're not authorized to delete this expense.");
+
+            await _expenseRepository.DeleteExpense(Id);
+            return new GeneralServiceResponseDto
             {
-                var currentExpense = await _expenseRepository.GetExpenseById(Id);
-                if(currentExpense is null)
-                {
-                    return ErrorResponse.CreateErrorResponse(404, "Expense doesn't exist.");
-                }
-
-                var currentLoggedInUser =  _userContext.GetCurrentLoggedInUserID();
-
-                if(currentExpense.UserId != currentLoggedInUser)
-                {
-                    return ErrorResponse.CreateErrorResponse(401, "Expense doesn't exist.");
-                }
-
-                await _expenseRepository.DeleteExpense(Id);
-
-                _logger.LogInformation("Expense Successfully Deleted.");
-
-                return new GeneralServiceResponseDto
-                {
-                    Success = true,
-                    StatusCode = 200,
-                    Message = "Expense has been deleted successfully."
-                };
-            }
-            catch(Exception ex)
-            {
-                _logger.LogError("Expense Deletion failed.", ex);
-                return ErrorResponse.CreateErrorResponse(400, "Expense deletion failed.");
-            }
+                 Success = true,
+                 StatusCode = 200,
+                 Message = "Expense has been deleted successfully."
+            };
         }
     }
 }

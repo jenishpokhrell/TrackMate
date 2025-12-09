@@ -36,7 +36,7 @@ namespace backend.Services.Shared
                     {
                         var error = string.Join(", ", roleResult.Errors.Select(e => e.Description));
                         _logger.LogError("Failed to create role {role}: {errors}", role, error);
-                        throw new UserRegistrationException($"Failed creating role: {error}");
+                        throw new AuthException($"Failed creating role: {error}");
                     }
                 }
 
@@ -54,15 +54,15 @@ namespace backend.Services.Shared
                 {
                     var error = string.Join(", ", addRoleResult.Errors.Select(e => e.Description));
                     _logger.LogError($"Failed to assign role {role} to {User.Id} : {error}");
-                    throw new UserRegistrationException($"Failed assigning role: {error}");
+                    throw new AuthException($"Failed assigning role: {error}");
                 }
 
                 _logger.LogInformation($"Successfully assigned {role} role to user {User.Id}");
             }
-            catch (Exception ex) when (!(ex is UserRegistrationException))
+            catch (Exception ex) when (!(ex is AuthException))
             {
                 _logger.LogError(ex, "Unexpected error in role management for user {UserId}", User.Id);
-                throw new UserRegistrationException("An error occured during role assignment", ex);
+                throw new AuthException("An error occured during role assignment", ex);
             }
         }
     }

@@ -7,6 +7,7 @@ namespace backend.Dto.Auth
 {
     public sealed record UserInfo
     {
+        public string Id { get; set; }
         public string Email { get; init; }
         public string Name { get; init; }
         public string Username { get; init; }

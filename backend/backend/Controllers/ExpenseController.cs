@@ -27,15 +27,8 @@ namespace backend.Controllers
         [Authorize]
         public async Task<IActionResult> AddExpenses([FromBody] AddExpenseDto addExpenseDto)
         {
-            try
-            {
-                var result = await _expenseService.AddExpensesAsync(addExpenseDto);
-                return StatusCode(result.StatusCode, result.Message);
-            }
-            catch(ApplicationException ex)
-            {
-                return BadRequest(ex.Message);
-            }
+            var result = await _expenseService.AddExpensesAsync(addExpenseDto);
+            return StatusCode(result.StatusCode, result.Message);
         }
 
         [HttpGet]
@@ -43,15 +36,8 @@ namespace backend.Controllers
         [Authorize]
         public async Task<IActionResult> GetTotalExpenses()
         {
-            try
-            {
-                var result = await _expenseService.GetTotalExpensesAsync();
-                return Ok(result);
-            }
-            catch (ApplicationException ex)
-            {
-                return BadRequest(ex.Message);
-            }
+            var result = await _expenseService.GetTotalExpensesAsync();
+            return Ok(result);
         }
 
         [HttpGet]
@@ -59,15 +45,8 @@ namespace backend.Controllers
         [Authorize]
         public async Task<IActionResult> GetAllExpenses()
         {
-            try
-            {
-                var result = await _expenseService.GetAllExpensesAsync();
-                return Ok(result);
-            }
-            catch (ApplicationException ex)
-            {
-                return BadRequest(ex.Message);
-            }
+            var result = await _expenseService.GetAllExpensesAsync();
+            return Ok(result);
         }
 
         [HttpPut]
@@ -75,15 +54,8 @@ namespace backend.Controllers
         [Authorize]
         public async Task<IActionResult> UpdateExpense(UpdateExpenseDto updateExpenseDto, Guid id)
         {
-            try
-            {
-                var result = await _expenseService.UpdateExpenseAsync(updateExpenseDto, id);
-                return StatusCode(result.StatusCode, result.Message);
-            }
-            catch (ApplicationException ex)
-            {
-                return BadRequest(ex.Message);
-            }
+            var result = await _expenseService.UpdateExpenseAsync(updateExpenseDto, id);
+            return StatusCode(result.StatusCode, result.Message);
         }
 
         [HttpDelete]
@@ -91,15 +63,8 @@ namespace backend.Controllers
         [Authorize]
         public async Task<IActionResult> Delete(Guid id)
         {
-            try
-            {
-                var result = await _expenseService.DeleteExpenseAsync(id);
-                return StatusCode(result.StatusCode, result.Message);
-            }
-            catch (ApplicationException ex)
-            {
-                return BadRequest(ex.Message);
-            }
+            var result = await _expenseService.DeleteExpenseAsync(id);
+            return StatusCode(result.StatusCode, result.Message);
         }
     }
 }

@@ -36,7 +36,7 @@ namespace backend.Services.Shared
             {
                 var errors = string.Join(", ", result.Errors.Select(e => e.Description));
                 _logger.LogWarning($"User creation failed for {userDto.Username}. Errors: {errors}");
-                throw new UserRegistrationException($"User Creation failed: {errors}");
+                throw new AuthException($"User Creation failed: {errors}");
             }
 
             _logger.LogInformation($"User creation for {userDto.Username} succeded.");

@@ -43,10 +43,10 @@ namespace backend.Services.Shared
 
                 return Task.CompletedTask;
             }
-            catch (Exception ex) when (!(ex is AccountNotFormedException))
+            catch (Exception ex) when (!(ex is AccountException))
             {
                 _logger.LogError(ex, "Account creation for {Name} failed.", accountDto.Name);
-                throw new AccountNotFormedException($"Failed to create account for '{accountDto.Name}'.", ex);
+                throw new AccountException($"Failed to create account for '{accountDto.Name}'.", ex);
             }
         }
 
@@ -72,10 +72,10 @@ namespace backend.Services.Shared
                 return Task.CompletedTask;
                 
             }
-            catch (Exception ex) when (!(ex is AccountNotFormedException))
+            catch (Exception ex) when (!(ex is AccountException))
             {
                 _logger.LogError(ex, "Account creation for {Name} failed.", accountDto.Name);
-                throw new AccountNotFormedException($"Failed to create account for '{accountDto.Name}'.", ex);
+                throw new AccountException($"Failed to create account for '{accountDto.Name}'.", ex);
             }
         }
     }

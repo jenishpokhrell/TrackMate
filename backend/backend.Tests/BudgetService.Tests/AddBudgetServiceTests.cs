@@ -45,7 +45,6 @@ namespace backend.Tests
 
             _context = new ApplicationDbContext(options);
             _context.Database.EnsureCreated();
-
         }
 
         private BudgetService CreateService()
@@ -105,6 +104,7 @@ namespace backend.Tests
         [Fact]
         public async Task Test3_AddBudgetAsync_ShouldReturn500_WhenBudgetAddFails()
         {
+            //Arrange
             var service = CreateService();
 
             var budgetDto = new AddBudgetDto
@@ -114,8 +114,10 @@ namespace backend.Tests
 
             _budgetCreationServiceMock.Setup(x => x.AddBudgetAsync(It.IsAny<AddBudgetDto>())).ThrowsAsync(new Exception("Budget add failed"));
 
+            //Act
             var result = await service.AddBudgetAsync(budgetDto);
 
+            //Assert (Fluent Assertions)
             result.Success.Should().BeFalse();
             result.StatusCode.Should().Be(500);
             result.Message.ToLower().Should().Contain("error");
