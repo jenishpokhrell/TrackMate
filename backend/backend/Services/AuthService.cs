@@ -329,10 +329,7 @@ namespace backend
             var accountGroupId = await _findAccountGroupId.FindAccountGroupIdAsync(loggedInUserId);
             var role = await _userManager.GetRolesAsync(user);
 
-            /*var group = user.Account.AccountGroupId.ToString();
-            _logger.LogInformation(group);*/
-
-            if (account.AccountGroupId != accountGroupId && user.Id != loggedInUserId && role.Contains(StaticUserRoles.ADMIN))
+            if (account.AccountGroupId != accountGroupId || user.Id != loggedInUserId && role.Contains(StaticUserRoles.ADMIN))
                 throw new ForbiddenException("You are not authorized to access this data.");
 
             var roles = await _userManager.GetRolesAsync(user);

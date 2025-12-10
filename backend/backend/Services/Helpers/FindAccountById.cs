@@ -22,9 +22,9 @@ namespace backend.Services.Helpers
         }
         public async Task<Account> GetAccountById(string UserId)
         {
-            var loggedInUser = _userContext.GetCurrentLoggedInUserID();
+            //var loggedInUser = _userContext.GetCurrentLoggedInUserID();
 
-            var account = await _context.Accounts.Include(a => a.AccountGroup).FirstOrDefaultAsync(a => a.UserId == loggedInUser);
+            var account = await _context.Accounts.Include(a => a.AccountGroup).FirstOrDefaultAsync(a => a.UserId == UserId);
 
             return account;
 
