@@ -9,7 +9,7 @@ namespace backend.Core.Constants
     {
         public const string USER = "USER";
 
-        public const string ADMIN = "ADMIN";
+        public const string ADMIN = "Admin";
 
         public const string GROUPADMIN = "GROUPADMIN";
 

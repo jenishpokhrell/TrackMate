@@ -9,6 +9,6 @@ namespace backend.Model.Dto.Auth
     public sealed record MeResponseDto
     {
          public string NewToken { get; init; }
-         public UserInfo userInfo { get; init; }
+         public UserInfo UserInfo { get; init; }
     }
 }
