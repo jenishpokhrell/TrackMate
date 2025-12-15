@@ -1,5 +1,7 @@
 ﻿using backend.DataContext;
 using backend.Dto.Auth;
+using backend.Model;
+using backend.Model.Dto.Auth;
 using backend.Repositories.Interfaces;
 using Dapper;
 using System;
@@ -16,6 +18,32 @@ namespace backend.Repositories
         {
             _dbo = dbo;
         }
+
+        public async Task<IEnumerable<UserInfoForAdmin>> GetAllAccounts()
+        {
+            var query = "SELECT u.Id, u.UserName, u.Email, u.PhoneNumber, a.Name, a.Gender, a.Address, ag.Id AS AccountGroupId, " +
+                "ag.Name AS AccountGroupName, ag.AdminUserId, ag.CreatedAt AS AccountCreatedAt, at.Id AS AccountTypeId, at.Type AS AccountType " +
+                "FROM Users u " +
+                "INNER JOIN Accounts AS a ON u.Id = a.UserId " +
+                "INNER JOIN AccountGroups AS ag ON a.AccountGroupId = ag.Id " +
+                "INNER JOIN AccountTypes AS at ON ag.AccountTypeId = at.Id";
+
+            using (var connection = _dbo.CreateConnection())
+            {
+                return await connection.QueryAsync<UserInfoForAdmin>(query);
+            }
+        }
+
+        public async Task<IEnumerable<ApplicationUser>> GetAllUsers()
+        {
+            var query = "SELECT * FROM Users";
+
+            using (var connection = _dbo.CreateConnection())
+            {
+                return await connection.QueryAsync<ApplicationUser>(query);
+            }
+        }
+
         public async Task GetUserById(string UserId)
         {
             var query = "SELECT * FROM Users WHERE Id = @UserId";

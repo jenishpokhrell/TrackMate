@@ -57,12 +57,30 @@ namespace backend.Controllers
            return Ok(user);
         }
 
+        [HttpPost]
+        [Route("me")]
+        [Authorize]
+        public async Task<IActionResult> Me(MeDto meDto)
+        {
+            var me = await _authService.MeAsync(meDto);
+            return Ok(me);
+        }
+
         [HttpGet]
         [Route("getuserbyid/{userid}")]
         [Authorize]
         public async Task<IActionResult> GetUserInfo(string userid)
         {
             var result = await _authService.GetUserByIdAsync(userid);
+            return Ok(result);
+        }
+
+        [HttpGet]
+        [Route("getallusers")]
+        [Authorize]
+        public async Task<ActionResult<IEnumerable<UserInfoForAdmin>>> GetAllUsers()
+        {
+            var result = await _authService.GetAllUsersAsync();
             return Ok(result);
         }
     }

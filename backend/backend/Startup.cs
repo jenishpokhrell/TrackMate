@@ -6,6 +6,8 @@ using backend.DataContext;
 using backend.Helpers;
 using backend.Middleware;
 using backend.Model;
+using backend.Repositories;
+using backend.Repositories.Interfaces;
 using backend.Services.Helpers;
 using backend.Services.Interfaces;
 using backend.Services.Shared;
@@ -53,6 +55,7 @@ namespace backend
             services.AddDbContext<ApplicationDbContext>(options => options.UseSqlServer(Configuration.GetConnectionString("DefaultConnection")));
 
             services.AddScoped<IAuthService, AuthService>();
+            services.AddScoped<IAuthRepository, AuthRepository>();
 
             services.AddScoped<IBudgetService, BudgetService>();
             services.AddScoped<IBudgetCreationService, BudgetCreationService>();
@@ -73,6 +76,9 @@ namespace backend
 
             services.AddScoped<IAccountCreationService, AccountCreationService>();
 
+            services.AddScoped<IAccountGroupRepository, AccountGroupRepository>();
+            services.AddScoped<IAccountTypeRepository, AccountTypeRepository>();
+
             services.AddScoped<IGroupCreationService, GroupCreationService>();
 
             services.AddScoped<IRoleManagementService, RoleManagementService>();
@@ -83,6 +89,7 @@ namespace backend
             services.AddScoped<IUserCreationService, UserCreationService>();
 
             services.AddScoped<GenereteJWTToken>();
+            services.AddScoped<GenerateUserInfo>();
             services.AddSingleton<DapperContext>();
             services.AddAutoMapper(typeof(Startup));
 

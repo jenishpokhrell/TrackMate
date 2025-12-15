@@ -17,12 +17,16 @@ using backend.Services.Shared.Interfaces;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Storage;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
+using Microsoft.IdentityModel.Tokens;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
+using System.IdentityModel.Tokens.Jwt;
 using System.Linq;
 using System.Security.Claims;
+using System.Text;
 using System.Threading.Tasks;
 
 namespace backend
@@ -36,6 +40,7 @@ namespace backend
         private readonly IRoleManagementService _roleManagementService;
         private readonly ApplicationDbContext _context;
         private readonly GenereteJWTToken _generateJWTToken;
+        private readonly GenerateUserInfo _userInfo;
         private readonly INotificationService _notificationService;
         private readonly IUserCreationService _userCreationService;
         private readonly IGroupCreationService _groupCreationService;
@@ -43,12 +48,17 @@ namespace backend
         private readonly IFindAccountById _findAccountById;
         private readonly IFindAccountGroupId _findAccountGroupId;
         private readonly IUserContextService _userContext;
-        //private readonly IAuthRepository _authRepository;
+        private readonly IConfiguration _configuration;
+        private readonly IAuthRepository _authRepository;
+        private readonly IAccountGroupRepository _accountGroupRepository;
+        private readonly IAccountTypeRepository _accountTypeRepository;
 
         public AuthService(RoleManager<IdentityRole> roleManager, UserManager<ApplicationUser> userManager, IMapper mapper, ILogger<AuthService> logger,
-           IRoleManagementService roleManagementService, ApplicationDbContext context, INotificationService notificationService, GenereteJWTToken generateJWTToken,
-           IUserCreationService userCreationService, IGroupCreationService groupCreationService, IAccountCreationService accountCreationService,
-           IFindAccountById findAccountById, IFindAccountGroupId findAccountGroupId, IUserContextService userContext)
+           IRoleManagementService roleManagementService, ApplicationDbContext context, INotificationService notificationService, 
+           GenereteJWTToken generateJWTToken, GenerateUserInfo userInfo, IUserCreationService userCreationService, IGroupCreationService groupCreationService,
+           IAccountCreationService accountCreationService,IFindAccountById findAccountById, IFindAccountGroupId findAccountGroupId,
+           IUserContextService userContext, IConfiguration configuration, IAuthRepository authRepository,
+           IAccountGroupRepository accountGroupRepository, IAccountTypeRepository accountTypeRepository)
         {
             _roleManager = roleManager ?? throw new ArgumentNullException(nameof(roleManager));
             _userManager = userManager ?? throw new ArgumentNullException(nameof(userManager));
@@ -58,12 +68,17 @@ namespace backend
             _context = context ?? throw new ArgumentNullException(nameof(context));
             _notificationService = notificationService ?? throw new ArgumentNullException(nameof(notificationService));
             _generateJWTToken = generateJWTToken ?? throw new ArgumentNullException(nameof(generateJWTToken));
+            _userInfo = userInfo ?? throw new ArgumentNullException(nameof(userInfo));
             _userCreationService = userCreationService ?? throw new ArgumentNullException(nameof(userCreationService));
             _groupCreationService = groupCreationService ?? throw new ArgumentNullException(nameof(groupCreationService));
             _accountCreationService = accountCreationService ?? throw new ArgumentNullException(nameof(accountCreationService));
             _findAccountById = findAccountById ?? throw new ArgumentNullException(nameof(findAccountById));
             _findAccountGroupId = findAccountGroupId ?? throw new ArgumentNullException(nameof(findAccountGroupId));
             _userContext = userContext ?? throw new ArgumentNullException(nameof(userContext));
+            _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
+            _authRepository = authRepository ?? throw new ArgumentNullException(nameof(authRepository));
+            _accountGroupRepository = accountGroupRepository ?? throw new ArgumentNullException(nameof(accountGroupRepository));
+            _accountTypeRepository = accountTypeRepository ?? throw new ArgumentNullException(nameof(accountTypeRepository));
         }
 
         public async Task<GeneralServiceResponseDto> RegisterIndividualAsync(RegisterUser userDto)
@@ -83,6 +98,7 @@ namespace backend
                     var createUser = await _userCreationService.CreateUserAsync(userDto);
 
                     await _roleManagementService.EnsureRoleExistsAsync(createUser, StaticUserRoles.USER);
+                    await _roleManagementService.EnsureRoleExistsAsync(createUser, StaticUserRoles.GROUPADMIN);
 
                     var group = new AccountGroupDto
                     {
@@ -291,12 +307,12 @@ namespace backend
 
             var userId = await _userManager.FindByIdAsync(user.Id);
 
-            var account = await _context.Accounts.Include(a => a.AccountGroup).FirstOrDefaultAsync(a => a.UserId == user.Id);
+            //var account = await _context.Accounts.Include(a => a.AccountGroup).FirstOrDefaultAsync(a => a.UserId == user.Id);
 
-            if (account is null)
+            /*if (account is null)
             {
                 throw new NotFoundException("Account not found");
-            }
+            }*/
 
             var isPasswordCorrect = await _userManager.CheckPasswordAsync(user, loginDto.Password);
 
@@ -307,12 +323,12 @@ namespace backend
 
             var newToken = await _generateJWTToken.GenerateToken(user);
             var roles = await _userManager.GetRolesAsync(user);
-            var userInfo = GenerateUserInfo(user, roles, account);
+            var loginInfo = _userInfo.GenerateLoginInfo(user, roles);
 
             return new LoginServiceResponseDto
             {
                 NewToken = newToken,
-                UserInfo = userInfo
+                LoginInfo = loginInfo
             };
         }
 
@@ -333,25 +349,78 @@ namespace backend
                 throw new ForbiddenException("You are not authorized to access this data.");
 
             var roles = await _userManager.GetRolesAsync(user);
-            var userInfo = GenerateUserInfo(user, roles, account);
+            var userInfo = _userInfo.GenerateInfo(user, roles, account);
 
             return _mapper.Map<UserInfo>(userInfo);
         }
 
-        private UserInfo GenerateUserInfo(ApplicationUser User, IList<string> roles, Account account)
+        public async Task<MeResponseDto> MeAsync(MeDto meDto)
         {
-            return new UserInfo
+            ClaimsPrincipal handler = new JwtSecurityTokenHandler().ValidateToken(meDto.Token, new TokenValidationParameters()
             {
-                Id = User.Id,
-                Email = User.Email,
-                Username = User.UserName,
-                Contact = User.PhoneNumber,
-                Name = account.Name,
-                Address = account.Address,
-                Gender = account.Gender.ToString(),
-                GroupName = account.AccountGroup?.Name,
-                Roles = string.Join(", ", roles)
+                ValidateIssuer = true,
+                ValidateAudience = true,
+                ValidIssuer = _configuration["JWT:ValidIssuer"],
+                ValidAudience = _configuration["JWT:ValidAudience"],
+                IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration["JWT:Secret"]))
+            }, out SecurityToken securityToken);
+
+            string decodedUsername = handler.Claims.First(q => q.Type == ClaimTypes.Name).Value;
+
+            if (decodedUsername is null)
+                return null;
+
+            var user = await _userManager.FindByNameAsync(decodedUsername);
+            if (user is null)
+                return null;
+
+            var account = await _findAccountById.GetAccountById(_userContext.GetCurrentLoggedInUserID());
+            if (account is null)
+                return null;
+
+            var newToken = await _generateJWTToken.GenerateToken(user);
+            var roles = await _userManager.GetRolesAsync(user);
+            var userInfo = _userInfo.GenerateInfo(user, roles, account);
+
+            return new MeResponseDto
+            {
+                NewToken = newToken,
+                UserInfo = userInfo
             };
+        }
+
+        public async Task<IEnumerable<UserInfoForAdmin>> GetAllUsersAsync()
+        {
+            var loggedInUser = _userContext.GetCurrentLoggedInUserID();
+
+            if (loggedInUser is null)
+                throw new UnauthorizedAccessException("User not authenticated.");
+
+            var user = await _userManager.FindByIdAsync(loggedInUser);
+
+            if (user is null)
+                throw new NotFoundException("User not found");
+
+            var role = await _userManager.GetRolesAsync(user);
+            //var users = await _authRepository.GetAllUsers();
+            var accounts = await _authRepository.GetAllAccounts();
+            //var accountGroups = await _accountGroupRepository.GetAllAccountGroups();
+            //var accountTypes = await _accountTypeRepository.GetAllAccountType()
+
+            if (!role.Contains(StaticUserRoles.ADMIN))
+                throw new ForbiddenException("Only admin can access all users data");
+
+            return _mapper.Map<IEnumerable<UserInfoForAdmin>>(accounts);
+        }
+
+        public async Task<GeneralServiceResponseDto> UpdateUserAsync(UpdateUserDto updateUserDto, string userId)
+        {
+            throw new NotImplementedException();
+        }
+
+        public async Task<GeneralServiceResponseDto> DeleteUserAsync(string userId)
+        {
+            throw new NotImplementedException();
         }
     }
 }
