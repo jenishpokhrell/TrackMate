@@ -6,6 +6,7 @@ using backend.Repositories.Interfaces;
 using Dapper;
 using System;
 using System.Collections.Generic;
+using System.Data;
 using System.Linq;
 using System.Threading.Tasks;
 
@@ -51,6 +52,22 @@ namespace backend.Repositories
             using(var connection = _dbo.CreateConnection())
             {
                 await connection.QueryFirstOrDefaultAsync(query, new { UserId });
+            }
+        }
+
+        public async Task UpdateAccount(Account account, string userId)
+        {
+            var query = "UPDATE Accounts SET Name = @Name, Gender = @Gender, Address = @Address WHERE UserId = @UserId";
+
+            var parameters = new DynamicParameters();
+            parameters.Add("UserId", userId, DbType.String);
+            parameters.Add("Name", account.Name, DbType.String);
+            parameters.Add("Gender", account.Gender, DbType.Int32);
+            parameters.Add("Address", account.Address, DbType.String);
+
+            using(var connection = _dbo.CreateConnection())
+            {
+                await connection.ExecuteAsync(query, parameters);
             }
         }
     }

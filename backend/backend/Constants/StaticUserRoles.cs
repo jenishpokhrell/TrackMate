@@ -7,11 +7,11 @@ namespace backend.Core.Constants
 {
     public static class StaticUserRoles
     {
-        public const string USER = "USER";
+        public const string USER = "User";
 
         public const string ADMIN = "Admin";
 
-        public const string GROUPADMIN = "GROUPADMIN";
+        public const string GROUPADMIN = "GroupAdmin";
 
         public const string GROUPADMIN_USER = "GROUPADMIN, USER";
     }

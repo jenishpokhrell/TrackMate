@@ -83,5 +83,14 @@ namespace backend.Controllers
             var result = await _authService.GetAllUsersAsync();
             return Ok(result);
         }
+
+        [HttpPut]
+        [Route("update-user/{userId}")]
+        [Authorize]
+        public async Task<IActionResult> UpdateUser([FromBody] UpdateUserDto updateUserDto, string userId)
+        {
+            var result = await _authService.UpdateUserAsync(updateUserDto, userId);
+            return Ok(result);
+        }
     }
 }

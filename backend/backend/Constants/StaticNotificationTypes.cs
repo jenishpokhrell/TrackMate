@@ -9,6 +9,8 @@ namespace backend.Core.Constants
     {
         public const string welcome = "Welcome, New User";
 
+        public const string accountUpdate = "Account Updated";
+
         public const string expensesAdd = "Expenses Added";
 
         public const string expensesUpdate = "Expenses Updated";

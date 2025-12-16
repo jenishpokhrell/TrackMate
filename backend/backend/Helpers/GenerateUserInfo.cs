@@ -18,7 +18,7 @@ namespace backend.Helpers
                 Email = User.Email,
                 UserName = User.UserName,
                 PhoneNumber = User.PhoneNumber,
-                Roles = string.Join(", ", roles)
+                Roles = string.Join(", ", roles).ToLower()
             };
         }
         public UserInfo GenerateInfo(ApplicationUser User, IList<string> roles, Account account)
@@ -33,7 +33,7 @@ namespace backend.Helpers
                 Address = account.Address,
                 Gender = account.Gender.ToString(),
                 GroupName = account.AccountGroup?.Name,
-                Roles = string.Join(", ", roles)
+                Roles = string.Join(", ", roles).ToLower()
             };
         }
 
@@ -55,7 +55,7 @@ namespace backend.Helpers
                 AccountCreatedAt = account.CreatedAt,
                 AccountTypeId = accountType.Id,
                 AccountType = accountType.Type,
-                Roles = string.Join(", ", roles)
+                //Roles = string.Join(", ", roles).ToLower()
             };
         }
     }

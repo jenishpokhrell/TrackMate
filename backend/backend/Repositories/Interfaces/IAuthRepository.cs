@@ -13,5 +13,6 @@ namespace backend.Repositories.Interfaces
         Task GetUserById(string UserId);
         Task<IEnumerable<ApplicationUser>> GetAllUsers();
         Task<IEnumerable<UserInfoForAdmin>> GetAllAccounts();
+        Task UpdateAccount(Account account, string userId);
     }
 }

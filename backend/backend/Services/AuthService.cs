@@ -35,6 +35,7 @@ namespace backend
     {
         private readonly RoleManager<IdentityRole> _roleManager;
         private readonly UserManager<ApplicationUser> _userManager;
+        private readonly SignInManager<ApplicationUser> _signInManager;
         private readonly IMapper _mapper;
         private readonly ILogger<AuthService> _logger;
         private readonly IRoleManagementService _roleManagementService;
@@ -53,7 +54,8 @@ namespace backend
         private readonly IAccountGroupRepository _accountGroupRepository;
         private readonly IAccountTypeRepository _accountTypeRepository;
 
-        public AuthService(RoleManager<IdentityRole> roleManager, UserManager<ApplicationUser> userManager, IMapper mapper, ILogger<AuthService> logger,
+        public AuthService(RoleManager<IdentityRole> roleManager, UserManager<ApplicationUser> userManager, 
+            SignInManager<ApplicationUser> signInManager, IMapper mapper, ILogger<AuthService> logger,
            IRoleManagementService roleManagementService, ApplicationDbContext context, INotificationService notificationService, 
            GenereteJWTToken generateJWTToken, GenerateUserInfo userInfo, IUserCreationService userCreationService, IGroupCreationService groupCreationService,
            IAccountCreationService accountCreationService,IFindAccountById findAccountById, IFindAccountGroupId findAccountGroupId,
@@ -62,6 +64,7 @@ namespace backend
         {
             _roleManager = roleManager ?? throw new ArgumentNullException(nameof(roleManager));
             _userManager = userManager ?? throw new ArgumentNullException(nameof(userManager));
+            _signInManager = signInManager ?? throw new ArgumentNullException(nameof(signInManager));
             _mapper = mapper ?? throw new ArgumentNullException(nameof(mapper));
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
             _roleManagementService = roleManagementService ?? throw new ArgumentNullException(nameof(roleManagementService));
@@ -305,14 +308,7 @@ namespace backend
                 throw new NotFoundException("User not found");
             }
 
-            var userId = await _userManager.FindByIdAsync(user.Id);
-
-            //var account = await _context.Accounts.Include(a => a.AccountGroup).FirstOrDefaultAsync(a => a.UserId == user.Id);
-
-            /*if (account is null)
-            {
-                throw new NotFoundException("Account not found");
-            }*/
+            //var userId = await _userManager.FindByIdAsync(user.Id);
 
             var isPasswordCorrect = await _userManager.CheckPasswordAsync(user, loginDto.Password);
 
@@ -402,10 +398,7 @@ namespace backend
                 throw new NotFoundException("User not found");
 
             var role = await _userManager.GetRolesAsync(user);
-            //var users = await _authRepository.GetAllUsers();
-            var accounts = await _authRepository.GetAllAccounts();
-            //var accountGroups = await _accountGroupRepository.GetAllAccountGroups();
-            //var accountTypes = await _accountTypeRepository.GetAllAccountType()
+            var accounts = await _authRepository.GetAllAccounts();     
 
             if (!role.Contains(StaticUserRoles.ADMIN))
                 throw new ForbiddenException("Only admin can access all users data");
@@ -415,12 +408,91 @@ namespace backend
 
         public async Task<GeneralServiceResponseDto> UpdateUserAsync(UpdateUserDto updateUserDto, string userId)
         {
-            throw new NotImplementedException();
+            if (updateUserDto is null)
+            {
+                _logger.LogError("Update of data with null.");
+                throw new ValidationException("Updating user with null data.");
+            }
+
+            var currentUser = _userContext.GetCurrentLoggedInUserID();
+
+            var user = await _userManager.FindByIdAsync(userId);
+
+            if (user is null)
+                throw new NotFoundException("User not found");
+
+            if (currentUser != user.Id)
+                throw new ForbiddenException("You are not authorized to update this user.");
+
+            var account = await _context.Accounts.Where(a => a.UserId == userId).FirstOrDefaultAsync();
+
+            using var transaction = await _context.Database.BeginTransactionAsync();
+            try
+            {
+                user.Email = updateUserDto.Email;
+                user.UserName = updateUserDto.Username;
+                user.PhoneNumber = updateUserDto.PhoneNumber;
+
+                await _userManager.UpdateAsync(user);
+
+                account.Name = updateUserDto.Name;
+                account.Gender = updateUserDto.Gender;
+                account.Address = updateUserDto.Address;
+
+                await _authRepository.UpdateAccount(account, userId);
+
+                var notification = new AddNotificationDto
+                {
+                    UserId = user.Id,
+                    Type = StaticNotificationTypes.accountUpdate,
+                    Message = $"{account.Name}, you have updated your account.",
+                    IsRead = false
+                };
+
+                var dbTransaction = transaction.GetDbTransaction();
+                await _notificationService.WelcomeNotificationAsync(notification, dbTransaction);
+
+                await _signInManager.SignOutAsync();
+                await _signInManager.SignInAsync(user, isPersistent: false);
+                await _context.SaveChangesAsync();
+                await transaction.CommitAsync();
+
+                return new GeneralServiceResponseDto()
+                {
+                    Success = true,
+                    StatusCode = 200,
+                    Message = "User Updated Successfully"
+                };
+            }
+            catch(AuthException ex)
+            {
+                await transaction.RollbackAsync();
+                _logger.LogError("Update failed for {Name} done successfully.", user.UserName);
+                throw new AuthException("An error occured while registering user", ex);
+            }
         }
 
         public async Task<GeneralServiceResponseDto> DeleteUserAsync(string userId)
         {
-            throw new NotImplementedException();
+            var currentUser = _userContext.GetCurrentLoggedInUserID();
+
+            var user = await _userManager.FindByIdAsync(userId);
+
+            if (user is null)
+                throw new NotFoundException("User not found");
+
+            if (currentUser != user.Id)
+                throw new ForbiddenException("You are not authorized to delete this user account");
+
+            var account = await _context.Accounts.Where(a => a.UserId == user.Id).FirstOrDefaultAsync();
+            //var accountGroup = await _context.AccountGroups.Where(ag => ag.Us)
+
+            return new GeneralServiceResponseDto()
+            {
+                Success = true,
+                StatusCode = 200,
+                Message = "User Deleted Successfully"
+            };
         }
     }
 }

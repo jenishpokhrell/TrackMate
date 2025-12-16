@@ -20,6 +20,6 @@ namespace backend.Model.Dto.Auth
         public string AdminUserId { get; init; }
         public Guid AccountTypeId { get; init; }
         public string AccountType { get; init; }
-        public string Roles { get; init; }
+        //public string Roles { get; init; }
     }
 }
