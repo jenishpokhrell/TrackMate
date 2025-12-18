@@ -92,5 +92,23 @@ namespace backend.Controllers
             var result = await _authService.UpdateUserAsync(updateUserDto, userId);
             return Ok(result);
         }
+
+        [HttpPut]
+        [Route("change-password/{userId}")]
+        [Authorize]
+        public async Task<IActionResult> ChangePassword([FromBody] PasswordDto passwordDto, string userId)
+        {
+            var result = await _authService.ChangePasswordAsync(passwordDto, userId);
+            return Ok(result);
+        }
+
+        [HttpDelete]
+        [Route("delete-account-group/{accountGroupId}")]
+        [Authorize]
+        public async Task<IActionResult> DeleteAccountGroup(Guid accountGroupId)
+        {
+            var result = await _authService.DeleteUserAsync(accountGroupId);
+            return Ok(result);
+        }
     }
 }

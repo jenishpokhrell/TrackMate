@@ -14,6 +14,8 @@ namespace backend.Services.Interfaces
 
         Task<Notification> NotificationAsync(AddNotificationDto notificationDto, DbTransaction transcation);
 
+        Task<IEnumerable<GetNotificationDto>> GetMyNotificationsAsync();
+
         /*Task IncomeAddedNotificationAsync();
 
         Task ExpensesAddedNotificationAsync();*/

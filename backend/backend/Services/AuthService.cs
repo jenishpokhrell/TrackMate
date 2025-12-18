@@ -472,7 +472,7 @@ namespace backend
             }
         }
 
-        public async Task<GeneralServiceResponseDto> DeleteUserAsync(string userId)
+        public async Task<GeneralServiceResponseDto> ChangePasswordAsync(PasswordDto passwordDto, string userId)
         {
             var currentUser = _userContext.GetCurrentLoggedInUserID();
 
@@ -481,18 +481,86 @@ namespace backend
             if (user is null)
                 throw new NotFoundException("User not found");
 
-            if (currentUser != user.Id)
-                throw new ForbiddenException("You are not authorized to delete this user account");
+            if (user.Id != currentUser)
+                throw new ForbiddenException("You are not authorized to change this password.");
 
-            var account = await _context.Accounts.Where(a => a.UserId == user.Id).FirstOrDefaultAsync();
-            //var accountGroup = await _context.AccountGroups.Where(ag => ag.Us)
+            var changePassword = await _userManager.ChangePasswordAsync(user, passwordDto.CurrentPassword, passwordDto.NewPassword);
 
+            if (!changePassword.Succeeded)
+                throw new AuthException("Password didn't match");
+
+            await _signInManager.SignOutAsync();
+            await _signInManager.SignInAsync(user, isPersistent: false);
             return new GeneralServiceResponseDto()
             {
                 Success = true,
                 StatusCode = 200,
-                Message = "User Deleted Successfully"
+                Message = "Password Updated Successfully"
             };
+        }
+
+        public async Task<GeneralServiceResponseDto> DeleteUserAsync(Guid accountGroupId)
+        {
+            var currentUser = _userContext.GetCurrentLoggedInUserID();
+
+            var user = await _userManager.FindByIdAsync(currentUser);
+
+            var accountGroup = await _accountGroupRepository.GetAccountGroupById(accountGroupId);
+
+            if (accountGroup.Id == Guid.Empty)
+                throw new NotFoundException("Account Group doesn't exist.");
+
+            var role = await _userManager.GetRolesAsync(user);
+
+            if (accountGroup.AdminUserId != currentUser)
+                throw new ForbiddenException("You are not authorized to delete this account group");
+
+            if (!role.Contains(StaticUserRoles.GROUPADMIN))
+                throw new ForbiddenException("Only 'Group Admin' can delete account groups");
+
+            using var transaction = await _context.Database.BeginTransactionAsync();
+            try
+            {
+                var deleteUser = await _context.Users.Where(u => u.Account.AccountGroupId == accountGroupId).ToListAsync();
+                var deleteAccount = await _context.Accounts.Where(a => a.AccountGroupId == accountGroupId).ToListAsync();
+                var deleteBudget = await _context.Budgets.Where(b => b.AccountGroupId == accountGroupId).ToListAsync();
+                var deleteIncome = await _context.Incomes.Where(i => i.AccountGroupId == accountGroupId).ToListAsync();
+                var deleteExpenses = await _context.Expenses.Where(e => e.AccountGroupId == accountGroupId).ToListAsync();
+
+                _context.Budgets.RemoveRange(deleteBudget);
+                _context.Incomes.RemoveRange(deleteIncome);
+                _context.Expenses.RemoveRange(deleteExpenses);
+                _context.Accounts.RemoveRange(deleteAccount);
+                _context.AccountGroups.Remove(accountGroup);
+                _context.Users.RemoveRange(deleteUser);
+
+                var notification = new AddNotificationDto
+                {
+                    UserId = user.Id,
+                    Type = StaticNotificationTypes.accountGroupDelete,
+                    Message = $"{user.UserName}, have deleted their accountGroup.",
+                    IsRead = false
+                };
+
+                var dbTransaction = transaction.GetDbTransaction();
+                await _notificationService.NotificationAsync(notification, dbTransaction);
+
+                await _context.SaveChangesAsync();
+                await transaction.CommitAsync();
+
+                return new GeneralServiceResponseDto()
+                {
+                    Success = true,
+                    StatusCode = 200,
+                    Message = "Account Group Deleted Successfully"
+                };
+            }
+            catch(AuthException ex)
+            {
+                await transaction.RollbackAsync();
+                _logger.LogError("Error while deleting account group");
+                throw new AuthException("An error occured while deleting account group", ex);
+            }   
         }
     }
 }

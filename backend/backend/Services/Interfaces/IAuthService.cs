@@ -19,6 +19,7 @@ namespace backend.Core.Interfaces.IServices
         Task<UserInfo> GetUserByIdAsync(string UserId);
         Task<IEnumerable<UserInfoForAdmin>> GetAllUsersAsync();
         Task<GeneralServiceResponseDto> UpdateUserAsync(UpdateUserDto updateUserDto, string userId);
-        Task<GeneralServiceResponseDto> DeleteUserAsync(string userId);
+        Task<GeneralServiceResponseDto> ChangePasswordAsync(PasswordDto passwordDto, string userId);
+        Task<GeneralServiceResponseDto> DeleteUserAsync(Guid accountGroupId);
     }
 }

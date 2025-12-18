@@ -1,6 +1,7 @@
 ﻿using backend.Core.Interfaces.IRepositories;
 using backend.DataContext;
 using backend.Model;
+using backend.Model.Dto.Shared;
 using Dapper;
 using System;
 using System.Collections.Generic;
@@ -39,5 +40,15 @@ namespace backend.Core.Repositories
             );
         }
 
+        public async Task<IEnumerable<Notification>> GetMyNotifications(string userId)
+        {
+            var query = "SELECT * FROM Notifications WHERE UserId = @userId " +
+                "ORDER BY CreatedAt DESC";
+
+            using(var connection = _dbo.CreateConnection())
+            {
+                return await connection.QueryAsync<Notification>(query, new { userId });
+            }
+        }
     }
 }

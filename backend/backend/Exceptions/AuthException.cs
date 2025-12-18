@@ -8,8 +8,10 @@ namespace backend
 {
     public class AuthException : AppException
     {
+        public AuthException(string message) : base(message) { }
+
         public AuthException(string message, Exception innerException) : base(message, innerException) { }
 
-        public AuthException(string accountType) : base($"Account Type '{accountType}' not found") { }
+        //public AuthException(string accountType) : base($"Account Type '{accountType}' not found") { }
     }
 }

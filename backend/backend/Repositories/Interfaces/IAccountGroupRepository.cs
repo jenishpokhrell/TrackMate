@@ -8,6 +8,7 @@ namespace backend.Repositories.Interfaces
 {
     public interface IAccountGroupRepository
     {
-        Task<IEnumerable<AccountGroup>> GetAllAccountGroups(); 
+        Task<IEnumerable<AccountGroup>> GetAllAccountGroups();
+        Task<AccountGroup> GetAccountGroupById(Guid accountGroupId);
     }
 }

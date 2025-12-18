@@ -11,6 +11,8 @@ namespace backend.Core.Constants
 
         public const string accountUpdate = "Account Updated";
 
+        public const string accountGroupDelete = "Account Group Deleted";
+
         public const string expensesAdd = "Expenses Added";
 
         public const string expensesUpdate = "Expenses Updated";

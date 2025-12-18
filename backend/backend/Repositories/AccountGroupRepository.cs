@@ -17,6 +17,17 @@ namespace backend.Repositories
         {
             _dbo = dbo;
         }
+
+        public async Task<AccountGroup> GetAccountGroupById(Guid accountGroupId)
+        {
+            var query = "SELECT * FROM AccountGroups WHERE Id = @accountGroupId";
+
+            using (var connection = _dbo.CreateConnection())
+            {
+                return await connection.QueryFirstOrDefaultAsync<AccountGroup>(query, new { accountGroupId } );
+            }
+        }
+
         public async Task<IEnumerable<AccountGroup>> GetAllAccountGroups()
         {
             var query = "SELECT * FROM AccountGroups";

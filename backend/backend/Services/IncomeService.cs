@@ -73,7 +73,7 @@ namespace backend.Core.Services
 
                 var notification = new AddNotificationDto
                 {
-                    Type = StaticNotificationTypes.incomeUpdate,
+                    Type = StaticNotificationTypes.incomeAdd,
                     Message = "Your income has been added successfully.",
                     IsRead = false,
                 };

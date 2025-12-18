@@ -1,8 +1,10 @@
-﻿using backend.Core.Constants;
+﻿using AutoMapper;
+using backend.Core.Constants;
 using backend.Core.Interfaces.IRepositories;
 using backend.Core.Interfaces.IServices;
 using backend.Core.Services;
 using backend.DataContext;
+using backend.Exceptions;
 using backend.Model;
 using backend.Model.Dto.Shared;
 using backend.Services.Interfaces;
@@ -17,14 +19,17 @@ namespace backend.Services.Shared
 {
     public class NotificationService : INotificationService
     {
-        private readonly IUserContextService _user;
+        private readonly IUserContextService _userContext;
         private readonly INotificationRepository _notificationRepository;
+        private readonly IMapper _mapper;
         private readonly ILogger<NotificationService> _logger;
 
-        public NotificationService(IUserContextService user, INotificationRepository notificationRepository, ILogger<NotificationService> logger)
+        public NotificationService(IUserContextService userContext, INotificationRepository notificationRepository, IMapper mapper,
+            ILogger<NotificationService> logger)
         {
-            _user = user;
+            _userContext = userContext;
             _notificationRepository = notificationRepository;
+            _mapper = mapper;
             _logger = logger;
         }
 
@@ -53,7 +58,7 @@ namespace backend.Services.Shared
             var notification = new Notification
             {
                 Id = Guid.NewGuid(),
-                UserId = _user.GetCurrentLoggedInUserID(),
+                UserId = _userContext.GetCurrentLoggedInUserID(),
                 Type = addNotificationDto.Type,
                 Message = addNotificationDto.Message,
                 IsRead = addNotificationDto.IsRead,
@@ -66,32 +71,17 @@ namespace backend.Services.Shared
             return notification;
         }
 
-        /*public async Task ExpensesAddedNotificationAsync(AddNotificationDto addNotificationDto, DbTransaction transaction = null)
+        public async Task<IEnumerable<GetNotificationDto>> GetMyNotificationsAsync()
         {
-            var notification = new Notification
-            {
-                UserId = _user.GetCurrentLoggedInUserID(),
-                Type = StaticNotificationTypes.expenses,
-                Message = $"{_user.GetCurrentLoggedInUserUsername()}, added an expense.",
-                IsRead = false
-            };
+            var currentUser = _userContext.GetCurrentLoggedInUserID();
 
-            await _notificationRepository.AddNotification(notification);
-            return;
+            var notifications = await _notificationRepository.GetMyNotifications(currentUser);
+
+            if (notifications is null)
+                throw new NotFoundException("You doesn't have any notifications yet.");
+
+            return _mapper.Map<IEnumerable<GetNotificationDto>>(notifications);
+
         }
-
-        public async Task IncomeAddedNotificationAsync()
-        {
-            var notification = new Notification
-            {
-                UserId = _user.GetCurrentLoggedInUserID(),
-                Type = StaticNotificationTypes.income,
-                Message = $"{_user.GetCurrentLoggedInUserUsername()} added an income.",
-                IsRead = false
-            };
-
-            await _notificationRepository.AddNotification(notification);
-            return;
-        }*/
     }
 }
