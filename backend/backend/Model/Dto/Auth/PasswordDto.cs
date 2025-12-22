@@ -9,5 +9,6 @@ namespace backend.Model.Dto.Auth
     {
         public string CurrentPassword { get; init; }
         public string NewPassword { get; init; }
+        public string ConfirmPassword { get; init; }
     }
 }

@@ -145,7 +145,6 @@ namespace backend
             {
                 c.SwaggerDoc("v1", new OpenApiInfo { Title = "backend", Version = "v1" });
 
-
                 //Allowing Swagger to authenticate users using JWT 
                 c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
                 {
@@ -175,7 +174,6 @@ namespace backend
                     }
                 });
             });
-
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.

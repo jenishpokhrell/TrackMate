@@ -94,11 +94,11 @@ namespace backend.Controllers
         }
 
         [HttpPut]
-        [Route("change-password/{userId}")]
+        [Route("change-password")]
         [Authorize]
-        public async Task<IActionResult> ChangePassword([FromBody] PasswordDto passwordDto, string userId)
+        public async Task<IActionResult> ChangePassword([FromBody] PasswordDto passwordDto)
         {
-            var result = await _authService.ChangePasswordAsync(passwordDto, userId);
+            var result = await _authService.ChangePasswordAsync(passwordDto);
             return Ok(result);
         }
 

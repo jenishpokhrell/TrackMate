@@ -30,7 +30,8 @@ namespace backend.Helpers
             var authClaims = new List<Claim>
             {
                 new Claim(ClaimTypes.Name, user.UserName),
-                new Claim(ClaimTypes.NameIdentifier, user.Id)
+                new Claim(ClaimTypes.NameIdentifier, user.Id),
+                new Claim("Security Stamp", user.SecurityStamp)
             };
 
             if (!userRoles.Contains("ADMIN"))
@@ -56,8 +57,7 @@ namespace backend.Helpers
                 claims: authClaims,
                 signingCredentials: signingCredentials
             );
-            string token = new JwtSecurityTokenHandler().WriteToken(tokenObject);
-            return token;
+            return new JwtSecurityTokenHandler().WriteToken(tokenObject);
         }
     }
 }

@@ -81,7 +81,6 @@ namespace backend.Services.Shared
                 throw new NotFoundException("You doesn't have any notifications yet.");
 
             return _mapper.Map<IEnumerable<GetNotificationDto>>(notifications);
-
         }
     }
 }

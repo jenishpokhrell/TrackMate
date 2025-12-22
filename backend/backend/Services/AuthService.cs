@@ -14,6 +14,7 @@ using backend.Repositories.Interfaces;
 using backend.Services.Helpers;
 using backend.Services.Interfaces;
 using backend.Services.Shared.Interfaces;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Storage;
@@ -96,7 +97,6 @@ namespace backend
             try
             {
                 _logger.LogInformation("Starting user registration for username: {Username}", userDto.Username);
-
                 {
                     var createUser = await _userCreationService.CreateUserAsync(userDto);
 
@@ -472,30 +472,38 @@ namespace backend
             }
         }
 
-        public async Task<GeneralServiceResponseDto> ChangePasswordAsync(PasswordDto passwordDto, string userId)
+        public async Task<GeneralServiceResponseDto> ChangePasswordAsync(PasswordDto passwordDto)
         {
-            var currentUser = _userContext.GetCurrentLoggedInUserID();
+            var currentUserId = _userContext.GetCurrentLoggedInUserID();
 
-            var user = await _userManager.FindByIdAsync(userId);
+            if (currentUserId is null)
+                throw new UnauthorizedAccessException("User not autheticated.");
+
+            var user = await _userManager.FindByIdAsync(currentUserId);
 
             if (user is null)
                 throw new NotFoundException("User not found");
 
-            if (user.Id != currentUser)
-                throw new ForbiddenException("You are not authorized to change this password.");
+            if (passwordDto.NewPassword != passwordDto.ConfirmPassword)
+                throw new BadHttpRequestException("Password do not match");
 
-            var changePassword = await _userManager.ChangePasswordAsync(user, passwordDto.CurrentPassword, passwordDto.NewPassword);
+            var result = await _userManager.ChangePasswordAsync(user, passwordDto.CurrentPassword, passwordDto.NewPassword);
 
-            if (!changePassword.Succeeded)
-                throw new AuthException("Password didn't match");
+            if (!result.Succeeded)
+            {
+                var errors = string.Join(", ", result.Errors.Select(e => e.Description));
+                throw new AuthException(errors);
+            }
 
-            await _signInManager.SignOutAsync();
-            await _signInManager.SignInAsync(user, isPersistent: false);
+            await _userManager.UpdateSecurityStampAsync(user);
+
+            var token = await _generateJWTToken.GenerateToken(user);
+            
             return new GeneralServiceResponseDto()
             {
                 Success = true,
                 StatusCode = 200,
-                Message = "Password Updated Successfully"
+                Message = $"Password Updated Successfully. Please use the new token to login: {token}"
             };
         }
 
